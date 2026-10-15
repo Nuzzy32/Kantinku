@@ -6,12 +6,10 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { canteenName, demoTable } from '@/lib/mock'
 import { rupiah } from '@/lib/rupiah'
 import type { ServiceType } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { groupByTenant, useBuyerCart, useHydrated } from './buyer-cart'
-import { menuHref } from './canteen'
+import { groupByTenant, useBuyerCart, useHydrated, useMenuHref, useTableMenu } from './buyer-cart'
 import { CheckoutLine } from './checkout-line'
 import { PageHeader } from './page-header'
 
@@ -28,6 +26,8 @@ export function CheckoutScreen() {
   const router = useRouter()
   const hydrated = useHydrated()
   const { lines, total, add, dec, setNote } = useBuyerCart()
+  const menu = useTableMenu()
+  const menuHref = useMenuHref()
   const [name, setName] = useState('')
   const [wa, setWa] = useState('')
   const [service, setService] = useState<ServiceType>('dine_in')
@@ -52,11 +52,11 @@ export function CheckoutScreen() {
     if (waError(wa)) return waRef.current?.focus()
     setPaying(true)
     // Demo: Story 3 mengirim menu_item_id + quantity + note ke /api/checkout, lalu pindah ke /order/<publicToken>.
-    timer.current = setTimeout(() => router.push('/order/demo'), 900)
+    timer.current = setTimeout(() => router.push(`/order/demo?meja=${menu?.qrToken ?? ''}`), 900)
   }
 
   const header = (
-    <PageHeader title="Pesanan Kamu" subtitle={`${canteenName} · ${demoTable}`} backHref={menuHref} backLabel="Kembali ke menu" />
+    <PageHeader title="Pesanan Kamu" subtitle={menu ? `${menu.canteen.name} · ${menu.tableLabel}` : undefined} backHref={menuHref} backLabel="Kembali ke menu" />
   )
 
   if (!hydrated) {

@@ -4,8 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useBuyerCart, useHydrated } from './buyer-cart'
-import { menuHref } from './canteen'
+import { useBuyerCart, useHydrated, useMenuHref, useTableMenu } from './buyer-cart'
 import { buildSnapshot, demoSnapshot, type Snapshot } from './order-snapshot'
 import { PageHeader } from './page-header'
 import { QrisPanel } from './qris-panel'
@@ -20,6 +19,8 @@ type Phase = 'pay' | 'status' | 'expired'
 export function OrderScreen({ rejectDemo }: { rejectDemo: boolean }) {
   const hydrated = useHydrated()
   const { lines, total, clear } = useBuyerCart()
+  const menu = useTableMenu()
+  const menuHref = useMenuHref()
   const [phase, setPhase] = useState<Phase>('pay')
   const [remaining, setRemaining] = useState(PAY_SECONDS)
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
@@ -101,7 +102,7 @@ export function OrderScreen({ rejectDemo }: { rejectDemo: boolean }) {
     <div ref={rootRef} className="flex flex-1 flex-col">
       <PageHeader
         title={phase === 'status' ? 'Status Pesanan' : 'Pembayaran'}
-        backHref={phase === 'pay' ? '/checkout' : menuHref}
+        backHref={phase === 'pay' && menu ? `/checkout?meja=${menu.qrToken}` : menuHref}
         backLabel={phase === 'pay' ? 'Kembali ke pesanan' : 'Kembali ke menu'}
       />
       <main className="flex flex-1 flex-col">

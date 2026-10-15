@@ -46,10 +46,10 @@ Prioritas: P0 · Effort: M · Dependensi: 0
 ### Story 2: Keranjang multi-tenant
 **Sebagai pembeli, saya ingin memasukkan menu dari beberapa tenant ke satu keranjang, agar cukup bayar sekali.**
 
-- [ ] Tombol `+` menambah item, lalu berubah jadi stepper `− n +`. Jumlah 0 berarti item dihapus.
-- [ ] Bar keranjang sticky menampilkan jumlah item dan total, dan terbaca screen reader (`role="status"`).
-- [ ] Keranjang tersimpan di localStorage (per kantin + meja), jadi tetap ada setelah refresh.
-- [ ] Setiap item bisa diberi catatan (maks 100 karakter).
+- [x] Tombol `+` menambah item, lalu berubah jadi stepper `− n +`. Jumlah 0 berarti item dihapus.
+- [x] Bar keranjang sticky menampilkan jumlah item dan total, dan terbaca screen reader (`role="status"`).
+- [x] Keranjang tersimpan di localStorage (per kantin + meja), jadi tetap ada setelah refresh.
+- [x] Setiap item bisa diberi catatan (maks 100 karakter).
 
 Prioritas: P0 · Effort: S · Dependensi: 1
 

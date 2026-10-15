@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { BuyerMenuProvider } from '@/components/buyer/buyer-cart'
 import { BuyerShell } from '@/components/buyer/buyer-shell'
 import { MenuScreen } from '@/components/buyer/menu-screen'
 import { getTableMenu } from '@/lib/menu'
@@ -18,7 +19,9 @@ export default async function MenuPage({ params, searchParams }: Props) {
   // ?tutup=1: kantin tutup, untuk melihat tampilannya (jam buka kantin belum dipakai untuk menutup otomatis).
   return (
     <BuyerShell>
-      <MenuScreen menu={menu} canteenClosed={tutup === '1'} />
+      <BuyerMenuProvider menu={menu}>
+        <MenuScreen menu={menu} canteenClosed={tutup === '1'} />
+      </BuyerMenuProvider>
     </BuyerShell>
   )
 }

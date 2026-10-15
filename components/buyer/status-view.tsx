@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { rupiah } from '@/lib/rupiah'
 import { cn } from '@/lib/utils'
-import { menuHref } from './canteen'
+import { useMenuHref } from './buyer-cart'
 import type { Snapshot, SnapshotGroup } from './order-snapshot'
 
 export type DemoStatus = 'paid' | 'accepted' | 'ready' | 'cancelled'
@@ -20,6 +20,7 @@ const badge = {
 const rejectReason = 'Bahan habis' // alasan contoh untuk mode ?demo=tolak
 
 export function StatusView({ snapshot, statuses }: { snapshot: Snapshot; statuses: Record<number, DemoStatus> }) {
+  const menuHref = useMenuHref()
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex items-center gap-3 bg-success px-4 py-4 text-primary-foreground">

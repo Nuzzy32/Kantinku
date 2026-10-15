@@ -4,6 +4,7 @@ import type { MenuItem, TenantSummary } from '@/lib/types'
 
 export type TableMenu = {
   canteen: { name: string; slug: string; opensAt: string; closesAt: string }
+  qrToken: string
   tableLabel: string
   tenants: TenantSummary[]
   items: MenuItem[]
@@ -54,6 +55,7 @@ export async function getTableMenu(qrToken: string): Promise<TableMenu | null> {
 
   return {
     canteen: { name: canteen.name, slug: canteen.slug, opensAt: hhmm(canteen.open_time), closesAt: hhmm(canteen.close_time) },
+    qrToken: qrToken.toLowerCase(), // satu meja = satu keranjang, apa pun huruf token di URL
     tableLabel: table.label,
     tenants: tenantsRes.data.map((t) => ({ id: t.id, code: t.code, name: t.name, isOpen: t.is_open })),
     items,

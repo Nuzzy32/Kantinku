@@ -44,15 +44,17 @@ function write(key: string, cart: Cart) {
 
 export const cartKey = (canteenSlug: string, table: string) => `kantinku-cart:${canteenSlug}:${table}`
 
-export function useCart(key: string) {
+// key null = belum tahu meja mana (mis. halaman dibuka tanpa token): keranjang kosong, tidak menulis apa pun.
+export function useCart(key: string | null) {
   const subscribe = useCallback((cb: () => void) => {
     listeners.add(cb)
     window.addEventListener('storage', cb)
     return () => { listeners.delete(cb); window.removeEventListener('storage', cb) }
   }, [])
-  const cart = useSyncExternalStore(subscribe, () => read(key), () => EMPTY)
+  const cart = useSyncExternalStore(subscribe, () => (key ? read(key) : EMPTY), () => EMPTY)
 
   const change = (id: number, delta: number) => {
+    if (!key) return
     const cur = read(key)
     const quantity = Math.max(0, Math.min(50, (cur[id]?.quantity ?? 0) + delta))
     const next = { ...cur }
@@ -61,9 +63,10 @@ export function useCart(key: string) {
     write(key, next)
   }
   const setNote = (id: number, note: string) => {
+    if (!key) return
     const cur = read(key)
     if (cur[id]) write(key, { ...cur, [id]: { ...cur[id], note: note.slice(0, 100) } })
   }
-  const clear = () => write(key, EMPTY)
+  const clear = () => { if (key) write(key, EMPTY) }
   return { cart, add: (id: number) => change(id, 1), dec: (id: number) => change(id, -1), setNote, clear }
 }
