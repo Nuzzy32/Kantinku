@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "test:checkout": "node --test docs/checkout.test.mjs",
     "test:schema": "node docs/schema.test.mjs docs/schema.sql",
     "types": "supabase gen types typescript --local --schema public > lib/database.types.ts"
   },
@@ -19,6 +20,7 @@
     "cn": "^0.4.0",
     "lucide-react": "1.57.0",
     "next": "16.4.1",
+    "qrcode": "1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
@@ -30,6 +32,7 @@
     "@electric-sql/pglite": "0.5.10",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

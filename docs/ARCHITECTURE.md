@@ -91,6 +91,14 @@ Aturan transisi dijaga di database (`set_order_status`), bukan hanya di UI.
 
 ### 5.1 Checkout QRIS
 
+Implementasi Story 3 menggunakan `POST https://api.xendit.co/qr_codes`, header `api-version: 2022-07-31`, autentikasi Basic dengan secret key sebagai username dan password kosong. Body: `reference_id` = public token checkout, `type: DYNAMIC`, `currency: IDR`, `amount` dari database, dan `expires_at` +10 menit. Respons diperiksa: `id`, `reference_id`, `amount`, `currency`, `type`, `qr_string`, `status: ACTIVE`, dan `expires_at`. QR dirender lokal memakai `qrcode`, tanpa mengirim payload ke layanan gambar eksternal.
+
+Sumber kontrak: [Xendit QR Codes](https://help.xendit.co/hc/en-us/articles/11664497664793-How-to-create-QR-Code-with-API-in-live-mode) dan [batas waktu QR](https://help.xendit.co/hc/en-us/articles/10877074706073-Does-QR-Code-have-expiry-time). Xendit juga menyediakan [panduan migrasi ke Payments API](https://docs.xendit.co/docs/migrate-direct-per-method-apis-to-v3); dukungan QR Codes pada akun pengelola perlu dikonfirmasi melalui spike mode test sebelum pilot. Format webhook belum dicatat sebagai terverifikasi karena belum ada simulasi pembayaran nyata.
+
+`GET /api/order/[publicToken]` hanya mengembalikan data pesanan minimum, tidak menyertakan nomor WA, referensi provider, atau ID internal checkout. UUID token adalah akses pembeli ke pesanannya. Halaman tidak diindeks dan memakai referrer policy `no-referrer`. Polling database berjalan tiap 5 detik; saat ini belum ada sinkronisasi pembayaran dari Xendit, menunggu Story 4. Kedaluwarsa pada tampilan dihitung dari waktu server yang tersimpan; job kedaluwarsa database tetap Story 5. Keranjang dipertahankan selama pembayaran belum terkonfirmasi.
+
+Batas checkout sementara: 10 percobaan per IP per menit per proses. Header IP wajib berasal dari reverse proxy tepercaya. Untuk deployment beberapa instance, gunakan pembatasan bersama di edge/database sebelum pilot. Kegagalan gateway menandai checkout `failed`; jika pencatatan kegagalan database ikut gagal, server mencatat ID checkout untuk rekonsiliasi tanpa mencetak rahasia.
+
 ```
 Pembeli            Next.js /api/checkout              Supabase               Xendit
   │ POST {items, nama, ...} │                              │                      │

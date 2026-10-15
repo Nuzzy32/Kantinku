@@ -24,6 +24,35 @@
 .DS_Store
 *.pem
 
+# private keys and local credentials
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+.npmrc
+.netrc
+credentials.json
+service-account*.json
+*-service-account.json
+
+# local database files and backups (keep SQL migrations tracked)
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+*.sql.gz
+
+# local tool settings and temporary files
+.claude/settings.local.json
+.mcp.json
+/tmp/
+/temp/
+*.log
+
 # debug
 npm-debug.log*
 yarn-debug.log*

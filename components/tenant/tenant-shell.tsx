@@ -1,5 +1,5 @@
 'use client'
-import { Suspense } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { ClipboardList, LogOut, ReceiptText, UtensilsCrossed, WifiOff } from 'lucide-react'
@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { buttonVariants } from '@/components/ui/button'
 import { useToast } from '@/components/toast'
 import { signOut } from '@/app/actions/auth'
+import { setShopOpen as saveShopOpen } from '@/app/tenant/(app)/actions'
 import { cn } from '@/lib/utils'
 import { useTenant } from './tenant-provider'
 
@@ -30,15 +31,37 @@ function OfflineBanner() {
 function ShopSwitch() {
   const { shopOpen, setShopOpen } = useTenant()
   const toast = useToast()
-  const change = (open: boolean) => {
+  const saving = useRef(false)
+  const [pending, setPending] = useState(false)
+  // Satu penyimpanan pada satu waktu supaya respons lambat tidak membalik status terbaru.
+  const save = async (open: boolean) => {
+    if (saving.current) return 'Status toko sedang disimpan.'
+    saving.current = true
+    setPending(true)
+    const previous = shopOpen
     setShopOpen(open)
+    try {
+      const { error } = await saveShopOpen(open)
+      if (error) setShopOpen(previous)
+      return error
+    } catch {
+      setShopOpen(previous)
+      return 'Gagal mengubah status toko. Coba lagi.'
+    } finally {
+      saving.current = false
+      setPending(false)
+    }
+  }
+  const change = async (open: boolean) => {
+    const error = await save(open)
+    if (error) return toast(error)
     // Tutup tak sengaja (tangan basah) harus mudah dibatalkan.
     if (open) toast('Toko dibuka. Pembeli bisa memesan.')
-    else toast('Toko ditutup. Pembeli tidak bisa memesan.', { label: 'Urungkan', onClick: () => setShopOpen(true) })
+    else toast('Toko ditutup. Pembeli tidak bisa memesan.', { label: 'Urungkan', onClick: () => void save(true).then((e) => e && toast(e)) })
   }
   return (
     <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg px-2">
-      <Switch checked={shopOpen} onCheckedChange={change} />
+      <Switch checked={shopOpen} onCheckedChange={change} disabled={pending} aria-label="Buka toko" aria-busy={pending} />
       <span className="flex flex-col leading-tight">
         <span className="text-xs font-medium text-muted-foreground">Toko</span>
         <span className={cn('text-base font-extrabold', shopOpen ? 'text-primary' : 'text-destructive')}>{shopOpen ? 'BUKA' : 'TUTUP'}</span>

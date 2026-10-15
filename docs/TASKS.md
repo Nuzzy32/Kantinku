@@ -58,6 +58,8 @@ Prioritas: P0 · Effort: S · Dependensi: 1
 ## Milestone 2 — Bayar QRIS
 
 ### Story 3: Checkout dan tampilkan QRIS 🔍 *(butuh spike Xendit)*
+
+**Progres:** form sudah mengirim checkout asli ke `/api/checkout`; server memvalidasi input, menghitung total lewat RPC database, membuat QR Xendit, dan menyimpan referensi serta batas waktu. Halaman token pesanan menampilkan QR PNG, unduh, hitung mundur, dan status database. Tes lokal memakai stub gateway/database tersedia melalui `npm run test:checkout`. **Belum selesai:** kunci Xendit mode test belum tersedia sehingga spike pembuatan QR dan simulasi pembayaran asli belum dilakukan. Konfirmasi webhook serta pengecekan langsung ke gateway tetap Story 4; tombol "Saya sudah bayar" saat ini hanya membaca ulang status database.
 **Sebagai pembeli, saya ingin membayar seluruh keranjang dengan QRIS, agar tidak perlu ke kasir.**
 
 - [ ] **Spike dulu (≤ ½ hari):** buat akun Xendit mode test, coba buat QR dan simulasi bayar, lalu catat format payload webhook di `docs/ARCHITECTURE.md`.
@@ -139,6 +141,8 @@ Prioritas: P0 · Effort: S · Dependensi: 8
 Prioritas: P0 · Effort: M · Dependensi: 6
 
 ### Story 11: Buka/tutup toko
+
+**Progres:** implementasi saklar database, rollback saat gagal, pembaruan menu/checkout tiap 5 detik, dan penolakan checkout di DB sudah ada. Build, lint, dan tes skema lulus. Migration `20261015162115_shop_checkout_validation.sql` perlu diterapkan ke database yang sudah ada. Acceptance criteria belum dicentang sebelum uji browser dengan dua akun tenant; pembayaran checkout masih demo sampai Story 3.
 **Sebagai tenant, saya ingin menutup toko dari HP, agar tidak menerima pesanan saat saya istirahat atau habis.**
 
 - [ ] Saklar BUKA/TUTUP di header mengubah `tenants.is_open`.

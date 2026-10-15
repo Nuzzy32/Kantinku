@@ -110,10 +110,10 @@ await db.exec(`insert into menu_categories (tenant_id, name) values (2, 'Jus')`)
 await rejects(asUser(T1, () => db.query(`update menu_items set category_id = 1 where id = 1`)), /foreign key/)
 
 // 8. Validasi checkout: tenant tutup, menu habis, keranjang kosong, qty aneh
-await rejects(checkout(JSON.stringify([{ menu_item_id: 1, quantity: 1 }])), /tidak tersedia: Mie Ayam/)
-await rejects(checkout(JSON.stringify([{ menu_item_id: 4, quantity: 1 }])), /tidak tersedia: Jus Habis/)
-await rejects(checkout(JSON.stringify([{ menu_item_id: 3, quantity: 0 }])), /tidak tersedia/)
-await rejects(checkout(JSON.stringify([{ menu_item_id: 3 }])), /tidak tersedia/)
+await rejects(checkout(JSON.stringify([{ menu_item_id: 1, quantity: 1 }])), /Mie Ayam Yamin 2 sedang tutup/) // tenant 1 ditutup di tes 7
+await rejects(checkout(JSON.stringify([{ menu_item_id: 4, quantity: 1 }])), /Menu habis: Jus Habis/)
+await rejects(checkout(JSON.stringify([{ menu_item_id: 3, quantity: 0 }])), /Jumlah tidak valid/)
+await rejects(checkout(JSON.stringify([{ menu_item_id: 3 }])), /Jumlah tidak valid/)
 await rejects(checkout(JSON.stringify([{ menu_item_id: 999, quantity: 1 }])), /tidak tersedia: #999/)
 await rejects(checkout('[]'), /Keranjang kosong/)
 

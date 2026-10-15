@@ -26,4 +26,5 @@ Tahap UI memakai data contoh dari `lib/mock.ts`, jadi bisa dijalankan tanpa Supa
 |---|---|
 | `npm run build && npm run lint` | Wajib lulus sebelum commit |
 | `npm run test:schema` | Uji skema database (PGlite, tanpa Docker). Wajib jika `docs/schema.sql` berubah |
+| `npm run test:checkout` | Tes validasi checkout, kontrak gateway, kegagalan, dan privasi token (stub, tanpa Xendit) |
 | `npm run seed` | Data contoh ke Supabase (butuh `.env.local` dan `SEED_PASSWORD`) |

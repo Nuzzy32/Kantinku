@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { groupByTenant, useBuyerCart, useHydrated, useMenuHref, useTableMenu } from './buyer-cart'
 import { CheckoutLine } from './checkout-line'
 import { PageHeader } from './page-header'
+import { useLiveRefresh } from './use-live-refresh'
 
 const services: { value: ServiceType; label: string; icon: LucideIcon }[] = [
   { value: 'dine_in', label: 'Makan di sini', icon: Armchair },
@@ -28,6 +29,7 @@ export function CheckoutScreen() {
   const { lines, total, add, dec, setNote } = useBuyerCart()
   const menu = useTableMenu()
   const menuHref = useMenuHref()
+  useLiveRefresh() // tenant yang baru tutup / menu yang baru habis langsung ditandai
   const [name, setName] = useState('')
   const [wa, setWa] = useState('')
   const [service, setService] = useState<ServiceType>('dine_in')
@@ -35,24 +37,48 @@ export function CheckoutScreen() {
   const [paying, setPaying] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
   const waRef = useRef<HTMLInputElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const submitting = useRef(false)
+  const [submitError, setSubmitError] = useState('')
 
   // Next menyimpan state halaman yang ditinggalkan (Activity). Tanpa ini, kembali ke sini sesudah bayar menyisakan tombol "Membuat QRIS…" yang mati.
-  useLayoutEffect(() => () => { clearTimeout(timer.current); setPaying(false) }, [])
+  useLayoutEffect(() => () => { setPaying(false) }, [])
 
   const errName = touched.name ? nameError(name) : undefined
   const errWa = touched.wa ? waError(wa) : undefined
   const blocked = lines.some((l) => !l.item.isAvailable || !l.tenant.isOpen)
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (paying || blocked) return
+    if (submitting.current || paying || blocked || !menu) return
     setTouched({ name: true, wa: true })
     if (nameError(name)) return nameRef.current?.focus()
     if (waError(wa)) return waRef.current?.focus()
+    submitting.current = true
     setPaying(true)
-    // Demo: Story 3 mengirim menu_item_id + quantity + note ke /api/checkout, lalu pindah ke /order/<publicToken>.
-    timer.current = setTimeout(() => router.push(`/order/demo?meja=${menu?.qrToken ?? ''}`), 900)
+    setSubmitError('')
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tableToken: menu.qrToken,
+          customerName: name.trim(), customerPhone: wa.trim(), serviceType: service,
+          items: lines.map((line) => ({ menu_item_id: line.item.id, quantity: line.quantity, note: line.note })),
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        setSubmitError(result.error ?? 'QRIS gagal dibuat. Coba lagi.')
+        setPaying(false)
+        return
+      }
+      router.push(`/order/${result.publicToken}`)
+    } catch {
+      setSubmitError('Koneksi bermasalah. Keranjangmu tetap tersimpan. Coba lagi.')
+      setPaying(false)
+    } finally {
+      submitting.current = false
+    }
   }
 
   const header = (
@@ -189,6 +215,7 @@ export function CheckoutScreen() {
             <span className="text-muted-foreground">Total</span>
             <span className="text-lg font-bold">{rupiah(total)}</span>
           </div>
+          {submitError && <p role="alert" className="mb-3 font-medium text-destructive">{submitError}</p>}
           <Button type="submit" size="lg" className="w-full rounded-xl font-bold" disabled={paying || blocked}>
             {paying ? (<><Loader2 aria-hidden className="animate-spin" />Membuat QRIS…</>) : `Bayar QRIS · ${rupiah(total)}`}
           </Button>

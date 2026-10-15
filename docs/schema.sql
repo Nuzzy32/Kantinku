@@ -275,8 +275,14 @@ begin
     if v_table_id is null then raise exception 'Meja tidak ditemukan'; end if;
   end if;
 
-  -- Validasi: menu ada, aktif, tersedia, tenant aktif & buka, di kantin yang sama.
-  select coalesce(m.name, '#' || (i->>'menu_item_id')) into v_bad
+  -- Validasi: menu ada, aktif, tersedia, tenant aktif & buka, di kantin yang sama. Pesan ditampilkan ke pembeli.
+  select case
+           when m.id is null or not m.is_active or not t.is_active or t.canteen_id <> p_canteen_id
+             then 'Menu tidak tersedia: ' || coalesce(m.name, '#' || (i->>'menu_item_id'))
+           when not t.is_open then t.name || ' sedang tutup. Hapus menunya dari pesanan.'
+           when not m.is_available then 'Menu habis: ' || m.name
+           else 'Jumlah tidak valid: ' || m.name
+         end into v_bad
   from jsonb_array_elements(p_items) i
   left join public.menu_items m on m.id = (i->>'menu_item_id')::bigint
   left join public.tenants t on t.id = m.tenant_id
@@ -285,7 +291,7 @@ begin
      or coalesce((i->>'quantity')::int, 0) not between 1 and 50
   limit 1;
   if v_bad is not null then
-    raise exception 'Menu tidak tersedia: %', v_bad;
+    raise exception '%', v_bad;
   end if;
 
   insert into public.checkouts (canteen_id, dining_table_id, customer_name, customer_phone,
