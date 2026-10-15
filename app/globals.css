@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Varian dark: shadcn memakainya, tapi app ini terang saja. Tanpa baris ini `dark:` ikut mode gelap sistem. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Token KantinKu. Warna HANYA lewat token ini, bukan hex di komponen.
+  Nama shadcn (background, primary, border, ...) dipetakan ke palet KantinKu
+  supaya komponen shadcn ikut tampil benar.
+  Aplikasi ini terang saja (dipakai di kantin, layar HP/tablet): tidak ada mode gelap.
+*/
+:root {
+  --background: #f7f7f5;
+  --foreground: #1b1c1b;
+  --card: #ffffff;
+  --card-foreground: #1b1c1b;
+  --popover: #ffffff;
+  --popover-foreground: #1b1c1b;
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  --secondary: #efefec;
+  --secondary-foreground: #1b1c1b;
+  --muted: #efefec;
+  --muted-foreground: #6b6c68;
+  --accent: #e3f1e7;
+  --accent-foreground: #116932;
+  --destructive: #b42318;
+  --border: #dcdcd8;
+  --input: #8c8d87; /* batas field: kontras 3:1 terhadap putih */
+  --ring: #15803d;
+  --radius: 0.5rem;
+
+  /* tambahan di luar shadcn */
+  --ink-2: #4a4b48;
+  --line-strong: #b9bab4;
+  --brand-hover: #116932;
+  --brand-soft: #e6f4ea;
+  --danger-soft: #fdf0ee;
+  --warn: #8a6500; /* teks di atas warn-soft: kontras ≥ 4.5:1 */
+  --warn-soft: #fff1b8;
+  --success: #15803d;
+  --success-soft: #e6f4ea;
+  --brand-line: var(--primary); /* garis/ikon aksen (tema pembeli memakai oranye ESB asli) */
+}
+
+/*
+  Tema PEMBELI: meniru tampilan ESB (oranye, font Inter, sudut 16px) yang sudah dikenal mahasiswa.
+  Dipasang dengan kelas `theme-buyer` di pembungkus halaman pembeli. Tenant dan pengelola tetap hijau.
+  Oranye ESB asli (#f05a28) hanya 3,4:1 di atas putih, jadi untuk ISI tombol dan TEKS dipakai versi sedikit
+  lebih gelap (--primary, 4,6:1). Warna asli dipakai untuk garis, ikon, dan cincin fokus (--brand-line).
+*/
+.theme-buyer {
+  --background: #ffffff;
+  --foreground: #212529;
+  --primary: #cc4a17;
+  --primary-foreground: #ffffff;
+  --brand-hover: #b03f12;
+  --brand-line: #f05a28;
+  --brand-soft: #fef2e6;
+  --accent: #fef2e6;
+  --accent-foreground: #b03f12;
+  --muted: #f1f3f5;
+  --muted-foreground: #6c757d;
+  --border: #dee2e6;
+  --ring: #f05a28;
+  --success: #198754;
+  --success-soft: #e8f5ee;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-ink-2: var(--ink-2);
+  --color-line-strong: var(--line-strong);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-brand-line: var(--brand-line);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: var(--radius);
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  --font-sans: var(--font-plus-jakarta), system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Hormati preferensi kurangi gerakan */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
