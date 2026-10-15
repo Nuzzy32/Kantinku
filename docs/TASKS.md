@@ -20,11 +20,11 @@ Setelah satu story selesai: uji manual sesuai acceptance criteria, commit, baru 
 ### Story 0: Setup project ⚙️ *(teknis)*
 **Sebagai developer, saya ingin project siap jalan dengan database dan data contoh, agar story berikutnya bisa langsung dikerjakan.**
 
-- [ ] Next.js (App Router, TypeScript), Tailwind, shadcn/ui, lucide-react, dan zod terpasang. Token warna dari `design/UI-SPEC.md` ada di `globals.css`.
-- [ ] `supabase/migrations/0001_init.sql` = isi `docs/schema.sql`, sudah dijalankan di project Supabase.
-- [ ] `node docs/schema.test.mjs docs/schema.sql` lulus.
-- [ ] Seed script: 1 kantin, 3 tenant, 10 menu, 5 meja, 1 akun admin, 1 akun kasir, 3 akun tenant.
-- [ ] `lib/supabase/{client,server,admin}.ts` ada. `admin.ts` diberi `import 'server-only'`.
+- [x] Next.js (App Router, TypeScript), Tailwind, shadcn/ui, lucide-react, dan zod terpasang. Token warna dari `design/UI-SPEC.md` ada di `globals.css`.
+- [x] `supabase/migrations/0001_init.sql` = isi `docs/schema.sql`, sudah dijalankan di project Supabase. *(Supabase lokal via `supabase start`; project cloud menyusul sebelum pilot.)*
+- [x] `node docs/schema.test.mjs docs/schema.sql` lulus.
+- [x] Seed script: 1 kantin, 3 tenant, 10 menu, 5 meja, 1 akun admin, 1 akun kasir, 3 akun tenant.
+- [x] `lib/supabase/{client,server,admin}.ts` ada. `admin.ts` diberi `import 'server-only'`.
 
 Prioritas: P0 · Effort: M · Dependensi: —
 

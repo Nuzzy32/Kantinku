@@ -434,6 +434,9 @@ group by o.tenant_id, day, t.revenue_share_percent;
 -- Mulai 30 Okt 2026 Supabase tidak lagi memberi hak otomatis ke tabel/fungsi baru di schema public.
 -- GRANT menentukan tabel mana yang terjangkau Data API; RLS menentukan baris mana yang terlihat.
 -- Tidak ada GRANT = 42501 permission denied. Jangan andalkan default privileges.
+-- Project lama (dan Supabase lokal) masih memberi hak penuh otomatis ke anon/authenticated. Cabut dulu
+-- supaya hanya GRANT di bawah yang berlaku; tanpa ini GRANT per kolom (tenants untuk anon) tidak ada artinya.
+revoke all on all tables in schema public from anon, authenticated;
 grant select on public.canteens, public.dining_tables,
                 public.menu_categories, public.menu_items to anon;
 -- Bagi hasil tenant bukan data publik: anon hanya dapat kolom yang dipakai halaman menu.

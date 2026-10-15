@@ -3,6 +3,10 @@
 import { PGlite } from '@electric-sql/pglite'
 import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+
+// Dua mode: Supabase baru (tanpa hak default) dan Supabase lama/lokal (anon & authenticated dapat hak penuh otomatis).
+const legacy = process.env.LEGACY_GRANTS === '1'
 
 const schema = readFileSync(process.argv[2], 'utf8')
 const db = new PGlite()
@@ -15,7 +19,9 @@ await db.exec(`
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create publication supabase_realtime;
   grant usage on schema public, auth to anon, authenticated, service_role;
-  -- Sengaja TIDAK ada default privileges: meniru Supabase baru. Hanya GRANT eksplisit di schema.sql yang berlaku.
+  -- Mode baru: tanpa default privileges, hanya GRANT eksplisit di schema.sql yang berlaku.
+  ${legacy ? `alter default privileges in schema public grant all on tables to anon, authenticated;
+             alter default privileges in schema public grant all on functions to anon, authenticated;` : ''}
 `)
 await db.exec(schema)
 
@@ -161,4 +167,8 @@ await db.query(`select mark_checkout_paid($1, $2)`, [sr.id, sr.total])
 assert.equal((await db.query(`select payment_status from checkouts where id = $1`, [sr.id])).rows[0].payment_status, 'paid')
 await db.exec(`reset role`)
 
-console.log('Semua tes skema lulus ✔')
+console.log(`Semua tes skema lulus ✔ (${legacy ? 'hak default lama' : 'GRANT eksplisit'})`)
+if (!legacy) {
+  const r = spawnSync(process.execPath, process.argv.slice(1), { env: { ...process.env, LEGACY_GRANTS: '1' }, stdio: 'inherit' })
+  process.exit(r.status ?? 1)
+}
