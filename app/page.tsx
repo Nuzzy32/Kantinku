@@ -1,3 +1,4 @@
+import { menuHref } from '@/components/buyer/canteen'
 import Link from 'next/link'
 
 // Halaman awal pengembangan: pintu masuk ke tiap layar. Diganti halaman sungguhan saat produk rilis.
@@ -5,8 +6,8 @@ const groups = [
   {
     title: 'Pembeli (HP)',
     links: [
-      { href: '/t/demo', label: 'Menu dari QR meja', note: 'Meja 34' },
-      { href: '/t/demo?tutup=1', label: 'Menu saat kantin tutup', note: 'contoh keadaan' },
+      { href: menuHref, label: 'Menu dari QR meja', note: 'Meja 34' },
+      { href: `${menuHref}?tutup=1`, label: 'Menu saat kantin tutup', note: 'contoh keadaan' },
       { href: '/t/salah', label: 'QR tidak dikenal', note: 'Meja tidak ditemukan' },
       { href: '/info', label: 'Info kantin', note: 'Jam operasional' },
       { href: '/profil', label: 'Profil tamu' },

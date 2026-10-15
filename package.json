@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
-    "test:schema": "node docs/schema.test.mjs docs/schema.sql"
+    "test:schema": "node docs/schema.test.mjs docs/schema.sql",
+    "types": "supabase gen types typescript --local --schema public > lib/database.types.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

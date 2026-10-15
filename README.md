@@ -14,7 +14,9 @@ npm run seed                 # 1 kantin, 3 tenant, 10 menu, 5 meja, akun @kantin
 npm run dev                  # http://localhost:3000
 ```
 
-Skema berubah? `supabase db reset` menjalankan ulang migration (data hilang), lalu `npm run seed` lagi.
+Skema berubah? `supabase db reset` menjalankan ulang migration (data hilang), lalu `npm run seed` dan `npm run types` lagi.
+
+Menu demo Meja 34: `/t/00000000-0000-4000-8000-000000000034` (tautannya ada di halaman `/`).
 
 Tahap UI memakai data contoh dari `lib/mock.ts`, jadi bisa dijalankan tanpa Supabase. Halaman `/` berisi tautan ke semua layar.
 

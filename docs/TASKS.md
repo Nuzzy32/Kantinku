@@ -35,11 +35,11 @@ Prioritas: P0 · Effort: M · Dependensi: —
 ### Story 1: Lihat menu dari QR meja
 **Sebagai pembeli, saya ingin langsung melihat menu semua tenant setelah scan QR di meja, agar bisa memilih makanan tanpa antre.**
 
-- [ ] `/t/[qrToken]` menampilkan nama kantin, label meja, tab tenant, dan daftar menu per tenant.
-- [ ] Menu `is_available = false` tampil abu-abu dengan label "Habis" dan tidak bisa ditambah.
-- [ ] Tenant dengan `is_open = false` menampilkan banner "Tutup sekarang" dan menunya tidak bisa ditambah.
-- [ ] QR token tidak valid menampilkan halaman "Meja tidak ditemukan".
-- [ ] Halaman terbuka ≤ 2 detik di 4G (data diambil di server component).
+- [x] `/t/[qrToken]` menampilkan nama kantin, label meja, tab tenant, dan daftar menu per tenant.
+- [x] Menu `is_available = false` tampil abu-abu dengan label "Habis" dan tidak bisa ditambah.
+- [x] Tenant dengan `is_open = false` menampilkan banner "Tutup sekarang" dan menunya tidak bisa ditambah.
+- [x] QR token tidak valid menampilkan halaman "Meja tidak ditemukan".
+- [x] Halaman terbuka ≤ 2 detik di 4G (data diambil di server component).
 
 Prioritas: P0 · Effort: M · Dependensi: 0
 

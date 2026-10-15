@@ -1,14 +1,13 @@
 import { ChevronRight, Menu, Search } from 'lucide-react'
 import Link from 'next/link'
-import { canteenName, demoTable } from '@/lib/mock'
+import type { TableMenu } from '@/lib/menu'
 import { cn } from '@/lib/utils'
-import { closesAt, opensAt } from './canteen'
 
 const roundButton =
   'grid size-11 place-items-center rounded-full bg-card text-foreground shadow-sm outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50'
 
 // Banner ±160px: gradasi krem ke oranye muda, "KantinKu" di kanan, dua tombol bulat putih di kanan atas.
-export function MenuBanner({ onSearch }: { onSearch: () => void }) {
+export function MenuBanner({ canteenName, onSearch }: { canteenName: string; onSearch: () => void }) {
   return (
     <div className="relative h-40 shrink-0 overflow-hidden bg-linear-to-br from-accent to-brand-line/30">
       <span aria-hidden className="absolute -top-12 -left-10 size-40 rounded-full bg-card/40" />
@@ -30,21 +29,21 @@ export function MenuBanner({ onSearch }: { onSearch: () => void }) {
 }
 
 // Seluruh kartu adalah tautan ke /info. Pil: buka = krem, tutup = merah.
-export function CanteenCard({ closed }: { closed: boolean }) {
+export function CanteenCard({ canteen, closed }: { canteen: TableMenu['canteen']; closed: boolean }) {
   return (
     <Link
       href="/info"
       className="mx-4 mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <div className="min-w-0 flex-1">
-        <h1 className="text-base font-bold">{canteenName}</h1>
+        <h1 className="text-base font-bold">{canteen.name}</h1>
         <span
           className={cn(
             'mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs leading-none font-bold',
             closed ? 'bg-destructive text-primary-foreground' : 'bg-accent text-accent-foreground',
           )}
         >
-          <span className="uppercase">{closed ? 'Tutup' : 'Buka'}</span>&nbsp;·&nbsp;{closed ? `Buka besok ${opensAt}` : `Tutup ${closesAt}`}
+          <span className="uppercase">{closed ? 'Tutup' : 'Buka'}</span>&nbsp;·&nbsp;{closed ? `Buka besok ${canteen.opensAt}` : `Tutup ${canteen.closesAt}`}
         </span>
         <span className="sr-only">. Lihat info kantin.</span>
       </div>
@@ -53,6 +52,6 @@ export function CanteenCard({ closed }: { closed: boolean }) {
   )
 }
 
-export function TableBox() {
-  return <p className="mt-4 rounded-t-2xl bg-accent py-2.5 text-center text-sm font-medium">Nomor Meja: {demoTable}</p>
+export function TableBox({ label }: { label: string }) {
+  return <p className="mt-4 rounded-t-2xl bg-accent py-2.5 text-center text-sm font-medium">Nomor Meja: {label}</p>
 }

@@ -231,8 +231,9 @@ create policy order_items_staff_read on public.order_items for select to authent
 -- semua perubahan wajib lewat fungsi di bawah.
 
 -- Tenant hanya boleh ubah is_open di tabel tenants (admin bebas).
+-- security definer: trigger juga jalan saat server (service_role) mengubah tenants, dan service_role tidak punya akses ke schema private.
 create function private.tenant_update_guard() returns trigger
-language plpgsql set search_path = '' as $$
+language plpgsql security definer set search_path = '' as $$
 begin
   if private.my_role() = 'tenant'
      and (to_jsonb(new) - 'is_open') <> (to_jsonb(old) - 'is_open') then

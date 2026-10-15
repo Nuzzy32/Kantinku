@@ -1,7 +1,7 @@
 'use client'
 import { ArrowUp, ChevronDown, Search } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { canteenName, demoTable, tenants } from '@/lib/mock'
+import type { TableMenu } from '@/lib/menu'
 import { cn } from '@/lib/utils'
 import { isTenantOpen, useBuyerCart } from './buyer-cart'
 import { CartBar } from './cart-bar'
@@ -17,8 +17,9 @@ const SPY_LINE = 136 // kategori dianggap aktif bila bagian atasnya sudah melewa
 
 const scrollBehavior = (): ScrollBehavior => (window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth')
 
-export function MenuScreen({ canteenClosed }: { canteenClosed: boolean }) {
-  const [activeId, setActiveId] = useState(tenants[0].id)
+export function MenuScreen({ menu, canteenClosed }: { menu: TableMenu; canteenClosed: boolean }) {
+  const { canteen, tableLabel, tenants, items } = menu
+  const [activeId, setActiveId] = useState(tenants[0]?.id)
   const [spy, setSpy] = useState<string | null>(null) // kategori yang sedang terlihat saat menggulir
   const [compact, setCompact] = useState(false)
   const [picking, setPicking] = useState(false)
@@ -32,8 +33,8 @@ export function MenuScreen({ canteenClosed }: { canteenClosed: boolean }) {
   const spyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const tenant = tenants.find((t) => t.id === activeId) ?? tenants[0]
-  const open = isTenantOpen(tenant, canteenClosed)
-  const categories = categoriesOf(tenant.id)
+  const open = tenant ? isTenantOpen(tenant, canteenClosed) : false
+  const categories = tenant ? categoriesOf(items, tenant.id) : []
   // spy milik tenant lain (sisa sebelum ganti tenant) tidak cocok, jatuh ke kategori pertama.
   const activeCat = categories.some((c) => c.category === spy) ? spy : categories[0]?.category
 
@@ -93,9 +94,9 @@ export function MenuScreen({ canteenClosed }: { canteenClosed: boolean }) {
 
   return (
     <main className="flex flex-1 flex-col">
-      <MenuBanner onSearch={() => setSearching(true)} />
-      <CanteenCard closed={canteenClosed} />
-      <TableBox />
+      <MenuBanner canteenName={canteen.name} onSearch={() => setSearching(true)} />
+      <CanteenCard canteen={canteen} closed={canteenClosed} />
+      <TableBox label={tableLabel} />
       <div ref={sentinelRef} aria-hidden />
 
       {/* Baris ringkas: muncul (dari atas) begitu banner, kartu, dan kotak meja tergulir keluar. Tersembunyi = inert. */}
@@ -107,9 +108,9 @@ export function MenuScreen({ canteenClosed }: { canteenClosed: boolean }) {
           compact ? 'translate-y-0' : '-translate-y-full',
         )}
       >
-        <p className="flex h-7 items-center justify-center bg-accent text-xs font-medium">{demoTable}</p>
+        <p className="flex h-7 items-center justify-center bg-accent text-xs font-medium">{tableLabel}</p>
         <div className="flex h-12 items-center justify-between gap-2 pl-4">
-          <p className="min-w-0 truncate text-base font-bold">{canteenName}</p>
+          <p className="min-w-0 truncate text-base font-bold">{canteen.name}</p>
           <button
             type="button"
             aria-label="Cari menu"
@@ -122,36 +123,42 @@ export function MenuScreen({ canteenClosed }: { canteenClosed: boolean }) {
         </div>
       </div>
 
-      <div className="sticky top-19 z-20 flex h-12 shrink-0 border-b border-border bg-card">
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          aria-label={`${tenant.code} ${tenant.name}, pilih tenant`}
-          onClick={() => setPicking(true)}
-          className="flex max-w-[46%] shrink-0 items-center gap-1 pr-3 pl-4 text-left font-bold text-primary uppercase outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50"
-        >
-          <span aria-hidden className="truncate">{tenant.code} {tenant.name}</span>
-          <ChevronDown aria-hidden className="size-4 shrink-0" />
-        </button>
-        <span aria-hidden className="my-2.5 w-px shrink-0 bg-border" />
-        <nav ref={tabsRef} aria-label="Kategori menu" className="flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
-          {categories.map(({ category }, i) => (
+      {tenant ? (
+        <>
+          <div className="sticky top-19 z-20 flex h-12 shrink-0 border-b border-border bg-card">
             <button
-              key={category}
               type="button"
-              aria-current={category === activeCat ? 'true' : undefined}
-              onClick={() => goCategory(i)}
-              className="h-full shrink-0 border-b-[3px] border-transparent px-3.5 text-sm font-semibold whitespace-nowrap text-muted-foreground uppercase outline-none transition-colors focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50 aria-[current=true]:border-brand-line aria-[current=true]:text-foreground"
+              aria-haspopup="dialog"
+              aria-label={`${tenant.code} ${tenant.name}, pilih tenant`}
+              onClick={() => setPicking(true)}
+              className="flex max-w-[46%] shrink-0 items-center gap-1 pr-3 pl-4 text-left font-bold text-primary uppercase outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50"
             >
-              {category}
+              <span aria-hidden className="truncate">{tenant.code} {tenant.name}</span>
+              <ChevronDown aria-hidden className="size-4 shrink-0" />
             </button>
-          ))}
-        </nav>
-      </div>
+            <span aria-hidden className="my-2.5 w-px shrink-0 bg-border" />
+            <nav ref={tabsRef} aria-label="Kategori menu" className="flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
+              {categories.map(({ category }, i) => (
+                <button
+                  key={category}
+                  type="button"
+                  aria-current={category === activeCat ? 'true' : undefined}
+                  onClick={() => goCategory(i)}
+                  className="h-full shrink-0 border-b-[3px] border-transparent px-3.5 text-sm font-semibold whitespace-nowrap text-muted-foreground uppercase outline-none transition-colors focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50 aria-[current=true]:border-brand-line aria-[current=true]:text-foreground"
+                >
+                  {category}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-      <div ref={listRef} className="scroll-mt-32 pb-4">
-        <MenuList tenant={tenant} open={open} qty={qty} onAdd={add} onDec={dec} />
-      </div>
+          <div ref={listRef} className="scroll-mt-32 pb-4">
+            <MenuList tenant={tenant} categories={categories} open={open} qty={qty} onAdd={add} onDec={dec} />
+          </div>
+        </>
+      ) : (
+        <p className="px-4 py-12 text-center text-muted-foreground">Belum ada tenant yang berjualan di kantin ini.</p>
+      )}
 
       {/* Zona bawah menempel: tombol naik-ke-atas di atas bar keranjang. Tembus ketuk kecuali anak-anaknya. */}
       <div className="pointer-events-none sticky bottom-0 z-30 mt-auto">
@@ -179,11 +186,11 @@ export function MenuScreen({ canteenClosed }: { canteenClosed: boolean }) {
           listRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
         }}
         tenants={tenants}
-        activeId={activeId}
+        activeId={tenant?.id}
         canteenClosed={canteenClosed}
         onPick={pickTenant}
       />
-      <SearchSheet open={searching} onOpenChange={setSearching} canteenClosed={canteenClosed} />
+      <SearchSheet open={searching} onOpenChange={setSearching} tenants={tenants} items={items} canteenClosed={canteenClosed} />
     </main>
   )
 }

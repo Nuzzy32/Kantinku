@@ -1,15 +1,15 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { cartKey, useCart } from '@/lib/cart'
 import { demoTable, menuItems, tenants } from '@/lib/mock'
-import type { MenuItem, Tenant } from '@/lib/types'
+import type { MenuItem, TenantSummary } from '@/lib/types'
 
 // Satu kantin + satu meja di data contoh. Story 1-2 mengganti ini dengan slug kantin dan label meja dari token QR.
 export const buyerCartKey = cartKey('teknik', demoTable)
 
-export type BuyerLine = { item: MenuItem; tenant: Tenant; quantity: number; note: string }
+export type BuyerLine = { item: MenuItem; tenant: TenantSummary; quantity: number; note: string }
 
 // Kantin tutup (?tutup=1) menutup semua tenant, apa pun saklar tenantnya.
-export const isTenantOpen = (tenant: Tenant, canteenClosed: boolean) => tenant.isOpen && !canteenClosed
+export const isTenantOpen = (tenant: TenantSummary, canteenClosed: boolean) => tenant.isOpen && !canteenClosed
 
 // Keranjang + data menu/tenant-nya. Id yang tidak ada di data (sisa localStorage lama) dibuang.
 export function useBuyerCart() {

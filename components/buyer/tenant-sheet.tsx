@@ -3,7 +3,7 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { CircleCheck, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogOverlay, DialogPortal, DialogTitle } from '@/components/ui/dialog'
-import type { Tenant } from '@/lib/types'
+import type { TenantSummary } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { isTenantOpen } from './buyer-cart'
 
@@ -14,8 +14,8 @@ export function TenantSheet({ open, onOpenChange, onClosed, tenants, activeId, c
   open: boolean
   onOpenChange: (open: boolean) => void
   onClosed: () => void
-  tenants: Tenant[]
-  activeId: number
+  tenants: TenantSummary[]
+  activeId: number | undefined
   canteenClosed: boolean
   onPick: (id: number) => void
 }) {

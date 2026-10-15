@@ -1,5 +1,5 @@
 import { rupiah } from '@/lib/rupiah'
-import type { MenuItem, Tenant } from '@/lib/types'
+import type { MenuItem, TenantSummary } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { MenuPhoto } from './menu-photo'
 import { QtyControl } from './qty-stepper'
@@ -8,7 +8,7 @@ import { QtyControl } from './qty-stepper'
 // `inSearch` menambah nama tenant di atas nama menu (hasil lintas tenant).
 export function MenuRow({ item, tenant, open, quantity, inSearch = false, onAdd, onDec }: {
   item: MenuItem
-  tenant: Tenant
+  tenant: TenantSummary
   open: boolean
   quantity: number
   inSearch?: boolean

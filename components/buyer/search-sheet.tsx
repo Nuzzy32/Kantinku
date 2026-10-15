@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { menuItems, tenants } from '@/lib/mock'
+import type { MenuItem, TenantSummary } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { isTenantOpen, useBuyerCart } from './buyer-cart'
 import { MenuRow } from './menu-row'
 
 // Pencarian layar penuh. Isi (SearchBody) ikut hilang saat ditutup, jadi isian cari otomatis kosong lagi.
 // Dialog di-portal ke <body>, jadi `theme-buyer` dipasang di Popup-nya sendiri.
-export function SearchSheet({ open, onOpenChange, canteenClosed }: {
+type Catalog = { tenants: TenantSummary[]; items: MenuItem[]; canteenClosed: boolean }
+
+export function SearchSheet({ open, onOpenChange, ...catalog }: Catalog & {
   open: boolean
   onOpenChange: (open: boolean) => void
-  canteenClosed: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
@@ -25,17 +26,17 @@ export function SearchSheet({ open, onOpenChange, canteenClosed }: {
         initialFocus={inputRef}
         className="theme-buyer top-0 h-dvh max-w-[430px] translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 rounded-none bg-card p-0 text-sm text-foreground ring-0 sm:max-w-[430px]"
       >
-        <SearchBody inputRef={inputRef} canteenClosed={canteenClosed} />
+        <SearchBody inputRef={inputRef} {...catalog} />
       </DialogContent>
     </Dialog>
   )
 }
 
-function SearchBody({ inputRef, canteenClosed }: { inputRef: React.RefObject<HTMLInputElement | null>; canteenClosed: boolean }) {
+function SearchBody({ inputRef, tenants, items, canteenClosed }: Catalog & { inputRef: React.RefObject<HTMLInputElement | null> }) {
   const [query, setQuery] = useState('')
   const { qty, add, dec } = useBuyerCart()
   const q = query.trim().toLowerCase()
-  const results = q ? menuItems.filter((i) => i.name.toLowerCase().includes(q)) : []
+  const results = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : []
 
   return (
     <>

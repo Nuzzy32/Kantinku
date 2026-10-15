@@ -14,6 +14,9 @@ export type Tenant = {
   email: string
 }
 
+// Yang boleh dilihat pembeli (anon hanya dapat kolom ini, lihat GRANT di schema.sql).
+export type TenantSummary = Pick<Tenant, 'id' | 'code' | 'name' | 'isOpen'>
+
 export type MenuItem = {
   id: number
   tenantId: number

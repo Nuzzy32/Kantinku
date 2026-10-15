@@ -45,6 +45,8 @@ lib/
   xendit.ts                       # buat QR, cek status
   rupiah.ts                       # format Rp
   cart.ts                         # keranjang di localStorage
+  menu.ts                         # data menu pembeli dari token QR (server)
+  database.types.ts               # hasil `npm run types` (jangan diedit manual)
 components/                       # komponen UI bersama
 supabase/migrations/0001_init.sql # salinan docs/schema.sql
 ```

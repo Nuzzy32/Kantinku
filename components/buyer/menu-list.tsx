@@ -1,12 +1,13 @@
 import { Store } from 'lucide-react'
-import { menuItems } from '@/lib/mock'
-import type { Tenant } from '@/lib/types'
+import type { MenuItem, TenantSummary } from '@/lib/types'
 import { MenuRow } from './menu-row'
 
-// Menu satu tenant dikelompokkan per kategori, urutan kemunculan di data.
-export function categoriesOf(tenantId: number) {
-  const groups: { category: string; items: (typeof menuItems)[number][] }[] = []
-  for (const item of menuItems) {
+export type CategoryGroup = { category: string; items: MenuItem[] }
+
+// Menu satu tenant dikelompokkan per kategori, urutan kemunculan di data (sudah diurutkan server).
+export function categoriesOf(items: MenuItem[], tenantId: number) {
+  const groups: CategoryGroup[] = []
+  for (const item of items) {
     if (item.tenantId !== tenantId) continue
     const group = groups.find((g) => g.category === item.category)
     if (group) group.items.push(item)
@@ -18,14 +19,14 @@ export function categoriesOf(tenantId: number) {
 export const categoryId = (tenantId: number, index: number) => `cat-${tenantId}-${index}`
 
 // Judul grup (nama tenant) + kategori. Tiap kategori punya id dan data-cat untuk tab sticky (gulir ke kategori + penanda aktif).
-export function MenuList({ tenant, open, qty, onAdd, onDec }: {
-  tenant: Tenant
+export function MenuList({ tenant, categories, open, qty, onAdd, onDec }: {
+  tenant: TenantSummary
+  categories: CategoryGroup[]
   open: boolean
   qty: (id: number) => number
   onAdd: (id: number) => void
   onDec: (id: number) => void
 }) {
-  const categories = categoriesOf(tenant.id)
   return (
     <>
       <div className="flex items-center gap-3 px-4 pt-5">

@@ -15,7 +15,10 @@ if (existing) { console.log('Seed sudah pernah dijalankan (kantin "teknik" ada).
 
 const canteen = ok(await db.from('canteens').insert({ name: 'Kantin Teknik', slug: 'teknik' }).select().single())
 
-ok(await db.from('dining_tables').insert(['Meja 1', 'Meja 2', 'Meja 3', 'Meja 4', 'Meja 34'].map((label) => ({ canteen_id: canteen.id, label }))))
+// Meja 34 diberi token tetap supaya tautan demo (/t/<token>, lihat components/buyer/canteen.ts) selalu jalan. Development saja.
+ok(await db.from('dining_tables').insert(['Meja 1', 'Meja 2', 'Meja 3', 'Meja 4', 'Meja 34'].map((label) => ({
+  canteen_id: canteen.id, label, ...(label === 'Meja 34' && { qr_token: '00000000-0000-4000-8000-000000000034' }),
+})), { defaultToNull: false })) // meja lain tetap dapat token acak (default kolom), bukan null
 
 const tenants = [
   { code: 'T3', name: 'Dapur Bu Sri', menu: { Nasi: [['Nasi Rames', 15000], ['Nasi Telur Balado', 12000]], Lauk: [['Tempe Mendoan (3)', 6000], ['Ayam Bakar', 14000]] } },

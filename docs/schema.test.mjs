@@ -165,6 +165,7 @@ const sr = (await checkout(one)).rows[0]
 await db.query(`update checkouts set provider_ref = 'qr_1', qr_string = '000201', expires_at = now() + interval '10 minutes' where id = $1`, [sr.id])
 await db.query(`select mark_checkout_paid($1, $2)`, [sr.id, sr.total])
 assert.equal((await db.query(`select payment_status from checkouts where id = $1`, [sr.id])).rows[0].payment_status, 'paid')
+await db.query(`update tenants set is_open = true where id = 1`) // server boleh ubah tenant (trigger guard tidak menolak)
 await db.exec(`reset role`)
 
 console.log(`Semua tes skema lulus ✔ (${legacy ? 'hak default lama' : 'GRANT eksplisit'})`)
