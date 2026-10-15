@@ -24,6 +24,7 @@ export type MenuItem = {
   name: string
   price: number
   isAvailable: boolean // toggle "stok habis"
+  imageUrl: string | null
 }
 
 export type OrderItem = { quantity: number; name: string; note?: string }

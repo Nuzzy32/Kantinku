@@ -24,7 +24,7 @@ export function MenuRow({ item, tenant, open, quantity, inSearch = false, onAdd,
 
   return (
     <li className="mx-4 flex gap-3 border-b border-border py-3 last:border-b-0">
-      <MenuPhoto muted={soldOut || !open} />
+      <MenuPhoto src={item.imageUrl} muted={soldOut || !open} />
       <div className="flex min-h-18 min-w-0 flex-1 flex-col">
         {inSearch && <p className="text-xs text-muted-foreground">{tenant.code} · {tenant.name}</p>}
         <p className={cn('text-sm leading-snug font-bold break-words', dim)}>{item.name}</p>

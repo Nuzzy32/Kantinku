@@ -31,7 +31,7 @@ export async function getTableMenu(qrToken: string): Promise<TableMenu | null> {
     db.from('tenants').select('id, code, name, is_open').eq('canteen_id', canteen.id).eq('is_active', true).order('code'),
     db
       .from('menu_items')
-      .select('id, tenant_id, name, price, is_available, sort_order, category:menu_categories(name, sort_order), tenant:tenants!inner(canteen_id)')
+      .select('id, tenant_id, name, price, is_available, image_url, sort_order, category:menu_categories(name, sort_order), tenant:tenants!inner(canteen_id)')
       .eq('tenant.canteen_id', canteen.id),
   ])
   if (tenantsRes.error) throw tenantsRes.error
@@ -51,6 +51,7 @@ export async function getTableMenu(qrToken: string): Promise<TableMenu | null> {
       name: r.name,
       price: r.price,
       isAvailable: r.is_available,
+      imageUrl: r.image_url,
     }))
 
   return {

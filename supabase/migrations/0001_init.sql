@@ -459,3 +459,16 @@ grant execute on function public.expire_checkouts() to service_role;
 -- ---------- Realtime ----------
 -- Dashboard tenant subscribe ke perubahan tabel orders (RLS tetap berlaku).
 alter publication supabase_realtime add table public.orders;
+
+-- ---------- Storage ----------
+-- Foto menu: bucket publik (pembeli tanpa login perlu melihatnya). Upload hanya lewat server (secret key)
+-- setelah peran tenant diperiksa, jadi tidak perlu policy di storage.objects. Batas 300KB juga dijaga server.
+-- Dilewati bila schema storage tidak ada (tes PGlite).
+do $$
+begin
+  if exists (select 1 from pg_namespace where nspname = 'storage') then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('menu-photos', 'menu-photos', true, 307200, array['image/webp', 'image/jpeg'])
+    on conflict (id) do nothing;
+  end if;
+end $$;

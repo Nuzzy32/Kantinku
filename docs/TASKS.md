@@ -132,9 +132,9 @@ Prioritas: P0 · Effort: S · Dependensi: 8
 ### Story 10: Kelola menu & stok habis
 **Sebagai tenant, saya ingin menambah atau mengubah menu dan menandai "habis" dengan satu tap, agar pembeli tidak memesan yang tidak ada.**
 
-- [ ] Saklar Tersedia/Habis per menu langsung berpengaruh ke halaman pembeli (≤ 5 detik).
-- [ ] Tambah/edit: nama, harga (> 0), kategori, foto opsional (dikompres ≤ 300KB, Supabase Storage).
-- [ ] Hapus = soft delete (`is_active = false`). Riwayat pesanan lama tetap utuh.
+- [x] Saklar Tersedia/Habis per menu langsung berpengaruh ke halaman pembeli (≤ 5 detik).
+- [x] Tambah/edit: nama, harga (> 0), kategori, foto opsional (dikompres ≤ 300KB, Supabase Storage).
+- [x] Hapus = soft delete (`is_active = false`). Riwayat pesanan lama tetap utuh.
 
 Prioritas: P0 · Effort: M · Dependensi: 6
 

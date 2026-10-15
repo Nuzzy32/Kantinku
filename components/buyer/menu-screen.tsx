@@ -1,5 +1,6 @@
 'use client'
 import { ArrowUp, ChevronDown, Search } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { TableMenu } from '@/lib/menu'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,14 @@ export function MenuScreen({ menu, canteenClosed }: { menu: TableMenu; canteenCl
 
   // Next menyimpan state halaman yang ditinggalkan (Activity). Sheet yang terbuka tidak boleh ikut tersimpan.
   useLayoutEffect(() => () => { setSearching(false); setPicking(false) }, [])
+
+  // Stok habis / tenant tutup sampai ke HP pembeli ≤ 5 detik: ambil ulang data server selama tab terlihat (state klien tetap).
+  // ponytail: polling 3 query per 5 detik per pembeli; ganti Supabase Realtime pada menu_items/tenants bila beban DB terasa.
+  const router = useRouter()
+  useEffect(() => {
+    const id = setInterval(() => { if (document.visibilityState === 'visible') router.refresh() }, 5000)
+    return () => clearInterval(id)
+  }, [router])
 
   // Satu pendengar gulir: baris ringkas (compact) dan kategori aktif. Dirapikan per frame.
   useEffect(() => {

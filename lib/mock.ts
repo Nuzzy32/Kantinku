@@ -14,7 +14,7 @@ export const tenants: Tenant[] = [
 export const myTenantId = 7 // tenant yang sedang "login" di prototype
 
 const m = (id: number, tenantId: number, category: string, name: string, price: number, isAvailable = true): MenuItem =>
-  ({ id, tenantId, category, name, price, isAvailable })
+  ({ id, tenantId, category, name, price, isAvailable, imageUrl: null })
 
 export const menuItems: MenuItem[] = [
   m(1, 3, 'Nasi', 'Nasi Rames', 15000), m(2, 3, 'Nasi', 'Nasi Telur Balado', 12000),

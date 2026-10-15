@@ -99,7 +99,7 @@ Header 64px: kode T7 + "Mie Mas Joko", tab Antrean · Menu · Rekap (tab aktif j
 ### B2. Menu `/tenant/menu`
 - Judul "Menu", keterangan "Saklar Habis langsung terlihat di HP pembeli.", kolom cari, tombol **Tambah menu**.
 - Daftar per kategori; baris ≥ 56px: nama, harga, `Switch` + teks "Tersedia"/"Habis", tombol Edit, tombol hapus (ikon, `aria-label`). Hapus = soft delete + toast "Urungkan" ("Riwayat pesanan lama tetap utuh.").
-- Dialog Tambah/Edit: nama, harga (angka saja, > 0), kategori (chip dari kategori yang ada + "Kategori baru"), kotak foto placeholder "Foto · maks 300KB" (belum aktif). Error: "Isi nama dan harga lebih dari 0."
+- Dialog Tambah/Edit: nama, harga (angka saja, > 0), kategori (chip dari kategori yang ada + "Kategori baru"), foto opsional (dikompres di browser ke WebP ≤ 300KB, diperiksa ulang di server, disimpan di bucket `menu-photos`). Error: "Isi nama dan harga lebih dari 0."
 - Data: `menuItems` milik tenant 7 di state lokal.
 
 ### B3. Rekap `/tenant/rekap`

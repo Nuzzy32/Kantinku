@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useContext, useEffect, useState, type Dispatch, type SetStateAction } from 'react'
-import { menuItems, myTenantId, tenantOrders } from '@/lib/mock'
-import type { MenuItem, OrderStatus, Tenant, TenantOrder } from '@/lib/types'
+import { tenantOrders } from '@/lib/mock'
+import type { OrderStatus, Tenant, TenantOrder } from '@/lib/types'
 import { useAlarm, useWakeLock } from './use-alarm'
 
 // Transisi sah = public.set_order_status di docs/schema.sql.
@@ -15,10 +15,7 @@ const ALLOWED: Partial<Record<OrderStatus, OrderStatus[]>> = {
 export const forwardStatus = (status: OrderStatus) => ALLOWED[status]?.find((s) => s !== 'cancelled')
 export const canReject = (status: OrderStatus) => !!ALLOWED[status]?.includes('cancelled')
 
-// Hapus menu = soft delete: baris tetap ada (riwayat pesanan lama utuh), hanya disembunyikan.
-export type MenuRow = MenuItem & { deleted?: boolean }
-
-// Tenant yang sedang login (dari database). Pesanan & menu di bawah masih data contoh sampai Story 7 dan 10.
+// Tenant yang sedang login (dari database). Pesanan di bawah masih data contoh sampai Story 7.
 export type CurrentTenant = Pick<Tenant, 'id' | 'code' | 'name' | 'isOpen' | 'sharePercent'>
 
 type TenantStore = {
@@ -30,8 +27,6 @@ type TenantStore = {
   moveOrder: (number: string, to: OrderStatus, reason?: string) => boolean
   /** Urungkan: kembalikan ke `from` hanya bila pesanan masih berstatus `to`. */
   undoOrder: (number: string, from: OrderStatus, to: OrderStatus) => void
-  menu: MenuRow[]
-  setMenu: Dispatch<SetStateAction<MenuRow[]>>
   shopOpen: boolean
   setShopOpen: Dispatch<SetStateAction<boolean>>
   started: boolean
@@ -51,7 +46,6 @@ export function useTenant() {
 // Satu sumber data untuk Antrean, Menu, Rekap, dan bunyi. Berada di layout supaya bunyi tetap jalan saat tenant membuka tab Menu/Rekap.
 export function TenantProvider({ tenant, children }: { tenant: CurrentTenant; children: React.ReactNode }) {
   const [orders, setOrders] = useState<TenantOrder[]>(tenantOrders)
-  const [menu, setMenu] = useState<MenuRow[]>(() => menuItems.filter((i) => i.tenantId === myTenantId))
   const [shopOpen, setShopOpen] = useState(tenant.isOpen)
   const [started, setStarted] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -86,7 +80,7 @@ export function TenantProvider({ tenant, children }: { tenant: CurrentTenant; ch
   }
 
   return (
-    <Ctx.Provider value={{ tenant, orders, newCount, elapsedMin, moveOrder, undoOrder, menu, setMenu, shopOpen, setShopOpen, started, start, muted, setMuted }}>
+    <Ctx.Provider value={{ tenant, orders, newCount, elapsedMin, moveOrder, undoOrder, shopOpen, setShopOpen, started, start, muted, setMuted }}>
       {children}
     </Ctx.Provider>
   )

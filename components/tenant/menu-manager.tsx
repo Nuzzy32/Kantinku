@@ -1,25 +1,29 @@
 'use client'
-import { useState } from 'react'
+import { startTransition, useOptimistic, useState } from 'react'
 import { Pencil, Plus, Search, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/components/toast'
-import { menuItems, myTenantId } from '@/lib/mock'
+import { setActive, setAvailable, type ActionResult } from '@/app/tenant/(app)/menu/actions'
 import { rupiah } from '@/lib/rupiah'
 import { cn } from '@/lib/utils'
-import { MenuFormDialog, type MenuDraft } from './menu-form-dialog'
-import { useTenant, type MenuRow } from './tenant-provider'
+import { MenuPhoto } from '@/components/buyer/menu-photo'
+import { MenuFormDialog } from './menu-form-dialog'
+
+export type TenantMenuItem = { id: number; name: string; price: number; category: string; isAvailable: boolean; imageUrl: string | null }
+type Change = { id: number; isAvailable?: boolean; removed?: boolean }
 
 function MenuRowItem({ item, onToggle, onEdit, onRemove }: {
-  item: MenuRow
-  onToggle: (item: MenuRow, available: boolean) => void
-  onEdit: (item: MenuRow) => void
-  onRemove: (item: MenuRow) => void
+  item: TenantMenuItem
+  onToggle: (item: TenantMenuItem, available: boolean) => void
+  onEdit: (item: TenantMenuItem) => void
+  onRemove: (item: TenantMenuItem) => void
 }) {
   return (
     <li className="flex min-h-16 items-center gap-3 px-4 py-2">
+      <MenuPhoto size="sm" src={item.imageUrl} muted={!item.isAvailable} />
       <div className="min-w-0 flex-1">
         <div className={cn('text-lg font-semibold', !item.isAvailable && 'text-muted-foreground')}>{item.name}</div>
         <div className="text-base text-ink-2">{rupiah(item.price)}</div>
@@ -42,44 +46,47 @@ function MenuRowItem({ item, onToggle, onEdit, onRemove }: {
   )
 }
 
-export function MenuManager() {
-  const { menu, setMenu } = useTenant()
+// Data dari server (page.tsx). Saklar & hapus tampil langsung (optimistic); gagal = kembali seperti semula + pesan.
+export function MenuManager({ items, categories: allCategories }: { items: TenantMenuItem[]; categories: string[] }) {
   const toast = useToast()
   const [query, setQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editing, setEditing] = useState<MenuRow | null>(null)
+  const [editing, setEditing] = useState<TenantMenuItem | null>(null)
+  const [live, apply] = useOptimistic(items, (list, c: Change) =>
+    c.removed ? list.filter((i) => i.id !== c.id) : list.map((i) => (i.id === c.id ? { ...i, isAvailable: c.isAvailable! } : i)),
+  )
 
-  const live = menu.filter((i) => !i.deleted)
-  const categories = [...new Set(live.map((i) => i.category))]
+  // Kategori yang punya menu dulu (urutan server), lalu kategori kosong supaya tetap bisa dipilih di dialog.
+  const categories = [...new Set([...live.map((i) => i.category), ...allCategories])]
   const q = query.trim().toLowerCase()
   const shown = live.filter((i) => i.name.toLowerCase().includes(q))
 
-  const patch = (id: number, change: Partial<MenuRow>) => setMenu((m) => m.map((i) => (i.id === id ? { ...i, ...change } : i)))
+  const run = (change: Change, action: () => Promise<ActionResult>, ok: () => void) =>
+    startTransition(async () => {
+      apply(change)
+      const { error } = await action()
+      if (error) toast(error)
+      else ok()
+    })
 
-  const openDialog = (item: MenuRow | null) => {
+  const openDialog = (item: TenantMenuItem | null) => {
     setEditing(item)
     setDialogOpen(true)
   }
 
-  const toggle = (item: MenuRow, available: boolean) => {
-    patch(item.id, { isAvailable: available })
-    toast(available ? `${item.name} tersedia lagi.` : `${item.name} ditandai habis.`)
-  }
+  const toggle = (item: TenantMenuItem, available: boolean) =>
+    run({ id: item.id, isAvailable: available }, () => setAvailable(item.id, available), () =>
+      toast(available ? `${item.name} tersedia lagi.` : `${item.name} ditandai habis.`))
 
-  const remove = (item: MenuRow) => {
-    patch(item.id, { deleted: true })
-    toast(`${item.name} dihapus. Riwayat pesanan lama tetap utuh.`, { label: 'Urungkan', onClick: () => patch(item.id, { deleted: false }) })
-  }
+  const remove = (item: TenantMenuItem) =>
+    run({ id: item.id, removed: true }, () => setActive(item.id, false), () =>
+      toast(`${item.name} dihapus. Riwayat pesanan lama tetap utuh.`, {
+        label: 'Urungkan',
+        onClick: () => startTransition(async () => { const { error } = await setActive(item.id, true); if (error) toast(error) }),
+      }))
 
-  const save = (draft: MenuDraft) => {
-    if (editing) {
-      patch(editing.id, draft)
-      toast('Menu disimpan.')
-    } else {
-      const id = Math.max(...menuItems.map((i) => i.id), ...menu.map((i) => i.id)) + 1
-      setMenu((m) => [...m, { id, tenantId: myTenantId, isAvailable: true, ...draft }])
-      toast(`${draft.name} ditambahkan.`)
-    }
+  const saved = (name: string) => {
+    toast(editing ? 'Menu disimpan.' : `${name} ditambahkan.`)
     setDialogOpen(false)
   }
 
@@ -136,7 +143,7 @@ export function MenuManager() {
         })
       )}
 
-      <MenuFormDialog open={dialogOpen} onOpenChange={setDialogOpen} item={editing} categories={categories} onSave={save} />
+      <MenuFormDialog open={dialogOpen} onOpenChange={setDialogOpen} item={editing} categories={categories} onSaved={saved} />
     </div>
   )
 }
