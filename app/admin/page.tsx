@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { AdminShell, type AdminSearchParams } from '@/components/admin/admin-shell'
+import { AdminShell } from '@/components/admin/admin-shell'
 import { RowTh, TableWrap, Td, Th } from '@/components/admin/data-table'
 import { RefundStatCard } from '@/components/admin/refund-stat-card'
 import { Pill } from '@/components/pill'
@@ -15,7 +15,7 @@ const COUNTED: OrderStatus[] = ['paid', 'accepted', 'ready', 'completed']
 // Sudah dibayar tapi belum diambil pembeli.
 const ACTIVE: OrderStatus[] = ['paid', 'accepted', 'ready']
 
-export default function AdminDashboardPage({ searchParams }: { searchParams: AdminSearchParams }) {
+export default function AdminDashboardPage() {
   // T7 dihitung dari tenantOrders, tenant lain dari todayOthers (lihat lib/mock.ts).
   const counted = tenantOrders.filter((o) => COUNTED.includes(o.status))
   const rows = tenants
@@ -38,7 +38,7 @@ export default function AdminDashboardPage({ searchParams }: { searchParams: Adm
   const maxGross = Math.max(1, ...rows.map((r) => r.gross))
 
   return (
-    <AdminShell section="dashboard" searchParams={searchParams}>
+    <AdminShell section="dashboard">
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>

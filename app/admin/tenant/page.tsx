@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import { AdminShell, type AdminSearchParams } from '@/components/admin/admin-shell'
+import { AdminShell } from '@/components/admin/admin-shell'
 import { TenantManager } from '@/components/admin/tenant-manager'
 
 export const metadata: Metadata = { title: 'Tenant' }
 
-export default function AdminTenantPage({ searchParams }: { searchParams: AdminSearchParams }) {
+export default function AdminTenantPage() {
   return (
-    <AdminShell section="tenant" searchParams={searchParams}>
+    <AdminShell section="tenant">
       <TenantManager />
     </AdminShell>
   )

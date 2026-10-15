@@ -42,6 +42,8 @@ lib/
   supabase/client.ts              # browser (publishable key)
   supabase/server.ts              # server component/route, pakai sesi user
   supabase/admin.ts               # server-only, secret key. JANGAN di-import di client
+  supabase/proxy.ts               # refresh sesi, dipanggil proxy.ts (root) untuk /tenant & /admin
+  auth.ts                         # getProfile, requireRole: penjaga peran di layout/halaman staf
   xendit.ts                       # buat QR, cek status
   rupiah.ts                       # format Rp
   cart.ts                         # keranjang di localStorage

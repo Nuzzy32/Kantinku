@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useEffect, useState, type Dispatch, type SetStateAction } from 'react'
-import { menuItems, myTenantId, tenantOrders, tenants } from '@/lib/mock'
+import { menuItems, myTenantId, tenantOrders } from '@/lib/mock'
 import type { MenuItem, OrderStatus, Tenant, TenantOrder } from '@/lib/types'
 import { useAlarm, useWakeLock } from './use-alarm'
 
@@ -18,8 +18,11 @@ export const canReject = (status: OrderStatus) => !!ALLOWED[status]?.includes('c
 // Hapus menu = soft delete: baris tetap ada (riwayat pesanan lama utuh), hanya disembunyikan.
 export type MenuRow = MenuItem & { deleted?: boolean }
 
+// Tenant yang sedang login (dari database). Pesanan & menu di bawah masih data contoh sampai Story 7 dan 10.
+export type CurrentTenant = Pick<Tenant, 'id' | 'code' | 'name' | 'isOpen' | 'sharePercent'>
+
 type TenantStore = {
-  tenant: Tenant
+  tenant: CurrentTenant
   orders: TenantOrder[]
   newCount: number
   elapsedMin: number
@@ -45,10 +48,8 @@ export function useTenant() {
   return store
 }
 
-const tenant = tenants.find((t) => t.id === myTenantId) ?? tenants[0]
-
 // Satu sumber data untuk Antrean, Menu, Rekap, dan bunyi. Berada di layout supaya bunyi tetap jalan saat tenant membuka tab Menu/Rekap.
-export function TenantProvider({ children }: { children: React.ReactNode }) {
+export function TenantProvider({ tenant, children }: { tenant: CurrentTenant; children: React.ReactNode }) {
   const [orders, setOrders] = useState<TenantOrder[]>(tenantOrders)
   const [menu, setMenu] = useState<MenuRow[]>(() => menuItems.filter((i) => i.tenantId === myTenantId))
   const [shopOpen, setShopOpen] = useState(tenant.isOpen)

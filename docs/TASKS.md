@@ -94,9 +94,9 @@ Prioritas: P0 · Effort: S · Dependensi: 4
 ### Story 6: Login tenant
 **Sebagai tenant, saya ingin login sekali di HP dan tetap login, agar tidak repot setiap hari.**
 
-- [ ] `/tenant/login` dengan email + password (akun dibuat admin).
-- [ ] Sesi bertahan (refresh token). Logout hanya lewat menu.
-- [ ] Peran selain `tenant` yang membuka `/tenant` diarahkan ke halaman yang sesuai.
+- [x] `/tenant/login` dengan email + password (akun dibuat admin).
+- [x] Sesi bertahan (refresh token). Logout hanya lewat menu.
+- [x] Peran selain `tenant` yang membuka `/tenant` diarahkan ke halaman yang sesuai.
 
 Prioritas: P0 · Effort: S · Dependensi: 0
 

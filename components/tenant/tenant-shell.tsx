@@ -6,6 +6,7 @@ import { ClipboardList, LogOut, ReceiptText, UtensilsCrossed, WifiOff } from 'lu
 import { Switch } from '@/components/ui/switch'
 import { buttonVariants } from '@/components/ui/button'
 import { useToast } from '@/components/toast'
+import { signOut } from '@/app/actions/auth'
 import { cn } from '@/lib/utils'
 import { useTenant } from './tenant-provider'
 
@@ -95,9 +96,11 @@ export function TenantShell({ children }: { children: React.ReactNode }) {
             <div className="ml-auto flex items-center gap-2">
               <ShopSwitch />
               <span className="h-8 w-px bg-border" aria-hidden />
-              <Link href="/tenant/login" aria-label="Keluar" title="Keluar" className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
-                <LogOut className="size-5" aria-hidden />
-              </Link>
+              <form action={signOut.bind(null, '/tenant/login')}>
+                <button type="submit" aria-label="Keluar" title="Keluar" className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+                  <LogOut className="size-5" aria-hidden />
+                </button>
+              </form>
             </div>
           </div>
         </header>

@@ -113,7 +113,7 @@ Header 64px: kode T7 + "Mie Mas Joko", tab Antrean · Menu · Rekap (tab aktif j
 ## C. Pengelola & kasir (tablet/desktop)
 
 ### Rangka (`app/admin/layout.tsx`, tidak untuk `/admin/login`)
-Bilah atas: KantinKu · "Pengelola · Kantin Teknik", navigasi Dashboard · Tenant · Meja & QR · Kasir · Laporan (badge jumlah refund di Laporan), nama + peran, keluar. **Kasir hanya melihat menu Kasir**: bila `?as=kasir` tampilkan nav kasir saja dan alihkan akses halaman lain ke `/admin/kasir` (hanya demonstrasi; peran asli dari profil di Story 14/16).
+Bilah atas: KantinKu · "Pengelola · Kantin Teknik", navigasi Dashboard · Tenant · Meja & QR · Kasir · Laporan (badge jumlah refund di Laporan), nama + peran, keluar. **Kasir hanya melihat menu Kasir**: peran `cashier` (dari profil) hanya melihat nav Kasir, halaman lain dialihkan ke `/admin/kasir`.
 
 ### C1. Dashboard `/admin`
 Tiga kartu: Omzet hari ini, Pesanan aktif (hitung nyata dari data contoh, tanpa angka karangan), **Perlu refund** (merah bila > 0, bisa diklik ke Laporan). Tabel per tenant: kode, nama, status Buka/Tutup (`Pill`), pesanan, omzet + batang proporsional omzet (div dengan lebar %, teks angka tetap ada).

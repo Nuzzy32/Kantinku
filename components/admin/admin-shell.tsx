@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Banknote, ChartColumn, LayoutDashboard, LogOut, QrCode, Store } from 'lucide-react'
+import { signOut } from '@/app/actions/auth'
+import { requireRole } from '@/lib/auth'
 import { canteenName } from '@/lib/mock'
 import { cn } from '@/lib/utils'
 import { RefundBadge } from './refund-badge'
 
 export type AdminSection = 'dashboard' | 'tenant' | 'meja' | 'kasir' | 'laporan'
-export type AdminSearchParams = Promise<{ as?: string | string[] }>
 
 const NAV = [
   { section: 'dashboard', href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,14 +18,11 @@ const NAV = [
 ] as const
 
 // Rangka halaman pengelola & kasir. Dipakai langsung di tiap page (bukan app/admin/layout.tsx)
-// supaya /admin/login tetap tanpa rangka. `?as=kasir` hanya demonstrasi peran; peran asli dari profil (Story 14/16).
-export async function AdminShell({ section, searchParams, children }: {
-  section: AdminSection
-  searchParams: AdminSearchParams
-  children: React.ReactNode
-}) {
-  const isCashier = (await searchParams).as === 'kasir'
-  if (isCashier && section !== 'kasir') redirect('/admin/kasir?as=kasir')
+// supaya /admin/login tetap tanpa rangka. Peran dari profil: tenant diarahkan ke /tenant, kasir hanya ke Kasir.
+export async function AdminShell({ section, children }: { section: AdminSection; children: React.ReactNode }) {
+  const profile = await requireRole(['admin', 'cashier'], '/admin/login')
+  const isCashier = profile.role === 'cashier'
+  if (isCashier && section !== 'kasir') redirect('/admin/kasir')
 
   const items = isCashier ? NAV.filter((n) => n.section === 'kasir') : NAV
   const role = isCashier ? 'Kasir' : 'Pengelola'
@@ -50,7 +48,7 @@ export async function AdminShell({ section, searchParams, children }: {
                 return (
                   <li key={s}>
                     <Link
-                      href={isCashier ? `${href}?as=kasir` : href}
+                      href={href}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
                         'inline-flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
@@ -68,17 +66,19 @@ export async function AdminShell({ section, searchParams, children }: {
           </nav>
           <div className="flex items-center gap-3">
             <div className="hidden text-right leading-tight md:block">
-              <div className="text-sm font-semibold">{isCashier ? 'Kasir Demo' : 'Admin Demo'}</div>
+              <div className="text-sm font-semibold">{profile.full_name}</div>
               <div className="text-xs text-muted-foreground">{role}</div>
             </div>
-            <Link
-              href="/admin/login"
-              aria-label="Keluar"
-              className="inline-flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-ink-2 outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <LogOut className="size-4" aria-hidden />
-              <span className="hidden md:inline">Keluar</span>
-            </Link>
+            <form action={signOut.bind(null, '/admin/login')}>
+              <button
+                type="submit"
+                aria-label="Keluar"
+                className="inline-flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-ink-2 outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <LogOut className="size-4" aria-hidden />
+                <span className="hidden md:inline">Keluar</span>
+              </button>
+            </form>
           </div>
         </div>
       </header>
