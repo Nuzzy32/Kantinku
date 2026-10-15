@@ -33,14 +33,16 @@ const done = (error?: { message: string } | null): ActionResult => {
 
 export async function setAvailable(itemId: number, available: boolean): Promise<ActionResult> {
   const { db } = await session()
-  const { error } = await db.from('menu_items').update({ is_available: available }).eq('id', id.parse(itemId))
+  const { data, error } = await db.from('menu_items').update({ is_available: available }).eq('id', id.parse(itemId)).select('id').maybeSingle()
+  if (!error && !data) return { error: 'Menu tidak ditemukan atau tidak bisa diubah. Muat ulang halaman.' }
   return done(error)
 }
 
 // Hapus = soft delete: baris tetap ada supaya order_items lama tetap utuh. `restore` untuk Urungkan.
 export async function setActive(itemId: number, active: boolean): Promise<ActionResult> {
   const { db } = await session()
-  const { error } = await db.from('menu_items').update({ is_active: active }).eq('id', id.parse(itemId))
+  const { data, error } = await db.from('menu_items').update({ is_active: active }).eq('id', id.parse(itemId)).select('id').maybeSingle()
+  if (!error && !data) return { error: 'Menu tidak ditemukan atau tidak bisa diubah. Muat ulang halaman.' }
   return done(error)
 }
 
@@ -80,7 +82,11 @@ export async function saveMenuItem(form: FormData): Promise<ActionResult> {
   }
 
   const row = { name: d.name, price: d.price, category_id: categoryId, ...(imageUrl !== undefined && { image_url: imageUrl }) }
-  if (d.id) return done((await db.from('menu_items').update(row).eq('id', d.id)).error)
+  if (d.id) {
+    const { data, error } = await db.from('menu_items').update(row).eq('id', d.id).select('id').maybeSingle()
+    if (!error && !data) return { error: 'Menu tidak ditemukan atau tidak bisa diubah. Muat ulang halaman.' }
+    return done(error)
+  }
 
   // Menu baru di urutan terakhir kategorinya.
   const { data: last } = await db.from('menu_items').select('sort_order').eq('category_id', categoryId).order('sort_order', { ascending: false }).limit(1).maybeSingle()

@@ -64,9 +64,11 @@ export function MenuManager({ items, categories: allCategories }: { items: Tenan
   const run = (change: Change, action: () => Promise<ActionResult>, ok: () => void) =>
     startTransition(async () => {
       apply(change)
-      const { error } = await action()
-      if (error) toast(error)
-      else ok()
+      try {
+        const { error } = await action()
+        if (error) toast(error)
+        else ok()
+      } catch { toast('Gagal menyimpan. Periksa koneksi lalu coba lagi.') }
     })
 
   const openDialog = (item: TenantMenuItem | null) => {
@@ -82,7 +84,12 @@ export function MenuManager({ items, categories: allCategories }: { items: Tenan
     run({ id: item.id, removed: true }, () => setActive(item.id, false), () =>
       toast(`${item.name} dihapus. Riwayat pesanan lama tetap utuh.`, {
         label: 'Urungkan',
-        onClick: () => startTransition(async () => { const { error } = await setActive(item.id, true); if (error) toast(error) }),
+        onClick: () => startTransition(async () => {
+          try {
+            const { error } = await setActive(item.id, true)
+            if (error) toast(error)
+          } catch { toast('Gagal mengembalikan menu. Periksa koneksi lalu coba lagi.') }
+        }),
       }))
 
   const saved = (name: string) => {

@@ -45,12 +45,14 @@ function MenuForm({ item, categories, onSaved, onClose }: { item: TenantMenuItem
     e.target.value = '' // pilih file yang sama lagi tetap memicu onChange
     if (!file) return
     setPhotoBusy(true)
-    const blob = await compressPhoto(file)
-    setPhotoBusy(false)
-    if (!blob) return setError('Foto tidak bisa dibaca atau terlalu besar. Coba foto lain.')
-    setError('')
-    setPhoto(blob)
-    setPreview(URL.createObjectURL(blob))
+    try {
+      const blob = await compressPhoto(file)
+      if (!blob) return setError('Foto tidak bisa dibaca atau terlalu besar. Coba foto lain.')
+      setError('')
+      setPhoto(blob)
+      setPreview(URL.createObjectURL(blob))
+    } catch { setError('Foto tidak bisa diproses. Coba foto lain.') }
+    finally { setPhotoBusy(false) }
   }
 
   const submit = (e: React.FormEvent) => {
@@ -70,9 +72,11 @@ function MenuForm({ item, categories, onSaved, onClose }: { item: TenantMenuItem
     if (photo) form.set('photo', new File([photo], 'foto.webp', { type: 'image/webp' }))
     else if (!preview && item?.imageUrl) form.set('removePhoto', '1')
     startSaving(async () => {
-      const result = await saveMenuItem(form)
-      if (result.error) setError(result.error)
-      else onSaved(name.trim())
+      try {
+        const result = await saveMenuItem(form)
+        if (result.error) setError(result.error)
+        else onSaved(name.trim())
+      } catch { setError('Gagal menyimpan. Periksa koneksi lalu coba lagi.') }
     })
   }
 

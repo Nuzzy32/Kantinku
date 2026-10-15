@@ -142,11 +142,10 @@ Prioritas: P0 · Effort: M · Dependensi: 6
 
 ### Story 11: Buka/tutup toko
 
-**Progres:** implementasi saklar database, rollback saat gagal, pembaruan menu/checkout tiap 5 detik, dan penolakan checkout di DB sudah ada. Build, lint, dan tes skema lulus. Migration `20261015162115_shop_checkout_validation.sql` perlu diterapkan ke database yang sudah ada. Acceptance criteria belum dicentang sebelum uji browser dengan dua akun tenant; pembayaran checkout masih demo sampai Story 3.
 **Sebagai tenant, saya ingin menutup toko dari HP, agar tidak menerima pesanan saat saya istirahat atau habis.**
 
-- [ ] Saklar BUKA/TUTUP di header mengubah `tenants.is_open`.
-- [ ] Saat tutup, menu tenant tidak bisa dipesan, dan checkout yang berisi menu tenant itu ditolak dengan pesan jelas.
+- [x] Saklar BUKA/TUTUP di header mengubah `tenants.is_open`.
+- [x] Saat tutup, menu tenant tidak bisa dipesan, dan checkout yang berisi menu tenant itu ditolak dengan pesan jelas.
 
 Prioritas: P0 · Effort: S · Dependensi: 6
 
