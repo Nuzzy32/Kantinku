@@ -51,5 +51,3 @@ export type Refund = {
   reason: string
   done: boolean
 }
-
-export type DiningTable = { label: string; qrToken: string }

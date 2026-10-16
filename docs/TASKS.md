@@ -187,8 +187,8 @@ Prioritas: P0 · Effort: M · Dependensi: 0
 ### Story 15: Meja & cetak QR
 **Sebagai pengelola, saya ingin membuat meja dan mencetak QR-nya, agar bisa ditempel di setiap meja.**
 
-- [ ] Tambah meja (label unik per kantin). QR berisi `NEXT_PUBLIC_APP_URL/t/<qr_token>`.
-- [ ] Halaman cetak: kartu "Pesan di Sini!" berisi label meja + QR + 3 langkah (Scan → Bayar QRIS → Ambil), siap cetak A4 (beberapa kartu per halaman).
+- [x] Tambah meja (label unik per kantin). QR berisi `NEXT_PUBLIC_APP_URL/t/<qr_token>`.
+- [x] Halaman cetak: kartu "Pesan di Sini!" berisi label meja + QR + 3 langkah (Scan → Bayar QRIS → Ambil), siap cetak A4 (beberapa kartu per halaman).
 
 Prioritas: P0 · Effort: S · Dependensi: 14
 

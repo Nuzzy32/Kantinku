@@ -122,7 +122,7 @@ Tiga kartu: Omzet hari ini, Pesanan aktif (hitung nyata dari data contoh, tanpa 
 Tabel: kode, nama, bagi hasil %, akun login (email), tombol Edit dan Nonaktifkan/Aktifkan. Dialog **Tambah tenant** (kode, nama, bagi hasil %, email; wajib semua, error ramah). Setelah dibuat, dialog menampilkan **kata sandi sementara sekali saja** + tombol salin. Edit tidak mengubah email. Tenant nonaktif redup, hilang dari menu pembeli, dan dashboard tenantnya menampilkan "Toko sedang dinonaktifkan". Bagian **Akun kasir**: daftar kasir + dialog tambah (nama, email).
 
 ### C3. Meja & QR `/admin/meja`
-Kiri: tambah meja (label unik, error "Label meja sudah dipakai."), daftar meja dengan kotak centang dan tautan `/t/<token>`. Kanan: **pratinjau A4** (maks 4 kartu per halaman): "Pesan di Sini!", label meja, kotak QR placeholder, 3 langkah (Scan → Bayar QRIS → Ambil). Tombol "Cetak QR" memanggil `window.print()`; CSS cetak hanya menampilkan pratinjau. QR sungguhan (butuh paket `qrcode`) dikerjakan di Story 15, bukan sekarang.
+Kiri: tambah meja (label unik, error "Label meja sudah dipakai."), daftar meja dengan kotak centang dan tautan `/t/<token>`. Kanan: **pratinjau A4** (maks 4 kartu per halaman): nama kantin, "Pesan di Sini!", label meja, QR asli (SVG dibuat server dengan paket `qrcode`, isi `NEXT_PUBLIC_APP_URL/t/<qr_token>`), 3 langkah (Scan → Bayar QRIS → Ambil). Tombol "Cetak QR" memanggil `window.print()`; CSS cetak hanya menampilkan pratinjau.
 
 ### C4. Kasir `/admin/kasir`
 - Kiri: kolom cari + chip filter tenant. Menu dikelompokkan per tenant. Tenant tutup tetap tampil, terlipat dengan label "Tutup" (tidak disembunyikan diam-diam). Menu habis tidak bisa ditambah. Kotak menu ≥ 56px, menampilkan jumlah di keranjang.
