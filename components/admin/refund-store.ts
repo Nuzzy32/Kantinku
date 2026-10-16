@@ -23,11 +23,3 @@ export function useRefunds(): Refund[] {
   const doneNow = useSyncExternalStore(subscribe, snapshot, snapshot)
   return useMemo(() => seed.map((r) => ({ ...r, done: doneNow.has(r.number) })), [doneNow])
 }
-
-export function usePendingRefunds() {
-  const all = useRefunds()
-  return useMemo(() => {
-    const pending = all.filter((r) => !r.done)
-    return { count: pending.length, amount: pending.reduce((a, r) => a + r.amount, 0) }
-  }, [all])
-}

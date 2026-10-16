@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Banknote, ChartColumn, LayoutDashboard, LogOut, QrCode, Store } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { requireRole } from '@/lib/auth'
-import { canteenName } from '@/lib/mock'
+import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { RefundBadge } from './refund-badge'
 
@@ -23,6 +23,16 @@ export async function AdminShell({ section, children }: { section: AdminSection;
   const profile = await requireRole(['admin', 'cashier'], '/admin/login')
   const isCashier = profile.role === 'cashier'
   if (isCashier && section !== 'kasir') redirect('/admin/kasir')
+
+  // Nama kantin + badge refund di setiap halaman pengelola dari database (RLS: kantin sendiri). Kasir tidak punya menu Laporan.
+  const db = await createClient()
+  const [canteen, refunds] = await Promise.all([
+    db.from('canteens').select('name').eq('id', profile.canteen_id).single(),
+    isCashier ? null : db.from('orders').select('id, tenant:tenants!inner(canteen_id)', { count: 'exact', head: true })
+      .eq('tenant.canteen_id', profile.canteen_id).eq('refund_status', 'needed'),
+  ])
+  const canteenName = canteen.data?.name ?? ''
+  const refundCount = refunds?.count ?? 0
 
   const items = isCashier ? NAV.filter((n) => n.section === 'kasir') : NAV
   const role = isCashier ? 'Kasir' : 'Pengelola'
@@ -57,7 +67,7 @@ export async function AdminShell({ section, children }: { section: AdminSection;
                     >
                       <Icon className="size-4" aria-hidden />
                       {label}
-                      {s === 'laporan' && <RefundBadge />}
+                      {s === 'laporan' && <RefundBadge count={refundCount} />}
                     </Link>
                   </li>
                 )

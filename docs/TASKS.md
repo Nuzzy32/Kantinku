@@ -204,8 +204,12 @@ Prioritas: P0 · Effort: M · Dependensi: 7, 14
 ### Story 17: Dashboard omzet pengelola
 **Sebagai pengelola, saya ingin melihat omzet dan aktivitas semua tenant hari ini, agar bisa memantau kantin dari satu layar.**
 
-- [ ] Kartu ringkasan: omzet hari ini, pesanan aktif, dan jumlah "perlu refund".
-- [ ] Tabel per tenant: status buka, jumlah pesanan, dan omzet hari ini.
+- [x] Kartu ringkasan: omzet hari ini, pesanan aktif, dan jumlah "perlu refund".
+- [x] Tabel per tenant: status buka, jumlah pesanan, dan omzet hari ini.
+
+Dashboard memakai sesi admin dan data kantinnya dari Supabase, tanpa secret key. Omzet/jumlah pesanan berdasarkan tanggal pembayaran WIB dari `tenant_daily_revenue` (pesanan ditolak tidak dihitung); tenant nonaktif tetap tercatat. Pesanan aktif dan refund tertunda mencakup semua tanggal. Badge refund pada dashboard mengikuti angka database. Data diperbarui saat halaman dimuat ulang; halaman Laporan dan penyelesaian refund tetap Story 18.
+
+Validasi: build dan lint, `npm run test:dashboard`, tes skema kedua mode hak akses, query langsung Supabase lokal, serta HTTP `/admin` dengan akun admin/kasir/tenant. Kasus pengujian mencakup batas tengah malam WIB, tenant nonaktif, isolasi kantin, refund lintas hari, data kosong, kegagalan query, dan pagination melewati 1.000 baris.
 
 Prioritas: P0 · Effort: S · Dependensi: 14
 

@@ -178,6 +178,67 @@ assert.equal((await db.query(`select payment_status from checkouts where id = $1
 await db.query(`update tenants set is_open = true where id = 1`) // server boleh ubah tenant (trigger guard tidak menolak)
 await db.exec(`reset role`)
 
+// 13. Dashboard pengelola: hari mengikuti waktu bayar WIB, aktivitas/refund lintas hari,
+// tenant nonaktif tetap dihitung, dan transaksi kantin lain tidak ikut terbaca.
+await db.exec('begin')
+try {
+  const dashboardAdmin = '44444444-4444-4444-4444-444444444444'
+  const dashboardCanteens = (await db.query(`
+    insert into canteens (name, slug) values
+      ('Dashboard A', 'dashboard-a'), ('Dashboard B', 'dashboard-b') returning id
+  `)).rows
+  const dashboardTenants = (await db.query(`
+    insert into tenants (canteen_id, code, name, is_active) values
+      ($1, 'DA', 'Tenant nonaktif', false), ($2, 'DB', 'Tenant kantin lain', true) returning id
+  `, dashboardCanteens.map((row) => row.id))).rows
+  await db.query(`insert into auth.users values ($1)`, [dashboardAdmin])
+  await db.query(`insert into profiles values ($1, 'admin', $2, null, 'Admin dashboard')`,
+    [dashboardAdmin, dashboardCanteens[0].id])
+
+  const fixtureOrders = [
+    [0, 'paid', 1000, '2026-10-15T16:59:59Z', 'none'],
+    [0, 'completed', 2000, '2026-10-15T17:00:00Z', 'none'],
+    [0, 'accepted', 3000, '2026-10-14T17:00:00Z', 'none'],
+    [0, 'cancelled', 4000, '2026-10-14T17:00:00Z', 'needed'],
+    [0, 'cancelled', 5000, '2026-10-15T17:00:00Z', 'needed'],
+    [0, 'pending_payment', 6000, null, 'none'],
+    [0, 'expired', 7000, null, 'none'],
+    [0, 'cancelled', 8000, '2026-10-15T17:00:00Z', 'done'],
+    [1, 'ready', 9000, '2026-10-15T17:00:00Z', 'none'],
+    [1, 'cancelled', 10000, '2026-10-14T17:00:00Z', 'needed'],
+  ]
+  for (const [canteen, status, subtotal, paidAt, refundStatus] of fixtureOrders) {
+    const fixtureCheckout = (await db.query(`
+      insert into checkouts (canteen_id, customer_name, service_type, payment_method, payment_status, total, paid_at)
+      values ($1, 'Pembeli dashboard', 'takeaway', 'qris', $2, $3, $4) returning id
+    `, [dashboardCanteens[canteen].id, paidAt ? 'paid' : status === 'expired' ? 'expired' : 'pending', subtotal, paidAt])).rows[0]
+    await db.query(`
+      insert into orders (checkout_id, tenant_id, status, subtotal, paid_at, refund_status)
+      values ($1, $2, $3, $4, $5, $6)
+    `, [fixtureCheckout.id, dashboardTenants[canteen].id, status, subtotal, paidAt, refundStatus])
+  }
+
+  const dashboardRevenue = (await asUser(dashboardAdmin, () => db.query(`
+    select tenant_id, day::text, order_count, gross from tenant_daily_revenue order by day
+  `))).rows
+  assert.deepEqual(dashboardRevenue.map((row) => [Number(row.tenant_id), row.day, Number(row.order_count), Number(row.gross)]), [
+    [Number(dashboardTenants[0].id), '2026-10-15', 2, 4000],
+    [Number(dashboardTenants[0].id), '2026-10-16', 1, 2000],
+  ])
+  assert.equal((await asUser(dashboardAdmin, () => db.query(`
+    select id from tenants where canteen_id = $1 and is_active = false
+  `, [dashboardCanteens[0].id]))).rows.length, 1)
+  const dashboardCounts = (await asUser(dashboardAdmin, () => db.query(`
+    select count(*) filter (where status in ('paid', 'accepted', 'ready')) as active,
+      count(*) filter (where refund_status = 'needed') as refunds,
+      sum(subtotal) filter (where refund_status = 'needed') as refund_amount
+    from orders
+  `))).rows[0]
+  assert.deepEqual([Number(dashboardCounts.active), Number(dashboardCounts.refunds), Number(dashboardCounts.refund_amount)], [2, 2, 9000])
+} finally {
+  await db.exec('reset role; rollback')
+}
+
 console.log(`Semua tes skema lulus ✔ (${legacy ? 'hak default lama' : 'GRANT eksplisit'})`)
 if (!legacy) {
   const r = spawnSync(process.execPath, process.argv.slice(1), { env: { ...process.env, LEGACY_GRANTS: '1' }, stdio: 'inherit' })
