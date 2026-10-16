@@ -4,7 +4,7 @@ const BEEP_EVERY_MS = 2400
 
 // Dua nada pendek naik (ding-dong) supaya terdengar di dapur ramai. Amplitudo dinaikkan/diturunkan halus agar tidak "klik".
 function beep(ctx: AudioContext) {
-  if (ctx.state !== 'running') void ctx.resume()
+  if (ctx.state !== 'running') { void ctx.resume().then(() => beep(ctx), () => {}); return }
   const t0 = ctx.currentTime
   ;[880, 1175].forEach((freq, i) => {
     const t = t0 + i * 0.18
@@ -33,14 +33,14 @@ export function useAlarm(active: boolean) {
   }, [active])
 
   useEffect(() => () => {
-    void ctxRef.current?.close()
+    void ctxRef.current?.close().catch(() => {})
     ctxRef.current = null // context tertutup tidak bisa dipakai lagi setelah remount
   }, [])
 
   return useCallback(() => {
     try {
       ctxRef.current ??= new AudioContext()
-      void ctxRef.current.resume()
+      void ctxRef.current.resume().catch(() => {})
     } catch {
       // Peramban tanpa WebAudio: layar tetap menampilkan pesanan, hanya tanpa bunyi.
     }

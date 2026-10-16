@@ -25,7 +25,7 @@ export function CheckoutLine({ line, onAdd, onDec, onNote }: {
   return (
     <li className="border-b border-border py-3 last:border-b-0">
       <div className="flex gap-3">
-        <MenuPhoto size="sm" muted={!!problem} />
+        <MenuPhoto size="sm" src={item.imageUrl} muted={!!problem} />
         <div className="min-w-0 flex-1">
           <p className="text-sm leading-snug font-bold break-words">{item.name}</p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">

@@ -1,23 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ExternalLink, Plus, Printer } from 'lucide-react'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
-import { diningTables } from '@/lib/mock'
-import type { DiningTable } from '@/lib/types'
+import { addTable } from '@/app/admin/meja/actions'
 import { Field } from './field'
 import { QrCard } from './qr-card'
 
 const PER_PAGE = 4
 
-// Data contoh di state lokal. Token meja sungguhan = uuid dari database (Story 15).
-export function TableManager() {
+export type PrintableTable = { label: string; qrToken: string; url: string; qrSrc: string }
+
+// Data dari server (page.tsx), QR sudah jadi. Meja baru otomatis ikut dipilih untuk dicetak.
+export function TableManager({ tables, canteenName }: { tables: PrintableTable[]; canteenName: string }) {
   const toast = useToast()
-  const [tables, setTables] = useState<DiningTable[]>(diningTables)
-  const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set(diningTables.map((t) => t.qrToken)))
+  const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set(tables.map((t) => t.qrToken)))
   const [label, setLabel] = useState('')
   const [error, setError] = useState('')
+  const [pending, start] = useTransition()
 
   const chosen = tables.filter((t) => selected.has(t.qrToken))
   const pages = Array.from({ length: Math.ceil(chosen.length / PER_PAGE) }, (_, i) => chosen.slice(i * PER_PAGE, (i + 1) * PER_PAGE))
@@ -32,15 +33,18 @@ export function TableManager() {
 
   const add = (e: React.FormEvent) => {
     e.preventDefault()
+    if (pending) return
     const name = label.trim().replace(/\s+/g, ' ')
     if (!name) return setError('Isi label meja, contoh: Meja 35.')
     if (tables.some((t) => t.label.toLowerCase() === name.toLowerCase())) return setError('Label meja sudah dipakai.')
-    const token = `demo-token-${String(tables.length + 1).padStart(2, '0')}`
-    setTables((prev) => [...prev, { label: name, qrToken: token }])
-    setSelected((prev) => new Set(prev).add(token))
-    setLabel('')
-    setError('')
-    toast(`${name} ditambahkan.`)
+    start(async () => {
+      const result = await addTable(name).catch(() => ({ error: 'Koneksi bermasalah. Coba lagi.', qrToken: undefined }))
+      if (result.error) return setError(result.error)
+      setSelected((prev) => new Set(prev).add(result.qrToken!))
+      setLabel('')
+      setError('')
+      toast(`${name} ditambahkan.`)
+    })
   }
 
   return (
@@ -66,8 +70,8 @@ export function TableManager() {
                 placeholder="Meja 35"
               />
             </div>
-            <Button type="submit" className="mt-5">
-              <Plus aria-hidden /> Tambah
+            <Button type="submit" className="mt-5" disabled={pending}>
+              <Plus aria-hidden /> {pending ? 'Menyimpan…' : 'Tambah'}
             </Button>
           </form>
 
@@ -127,7 +131,7 @@ export function TableManager() {
                   aria-label={`Halaman ${i + 1} dari ${pages.length}`}
                   className="mx-auto grid aspect-[210/297] w-full max-w-[34rem] grid-cols-2 content-start gap-3 rounded-lg border bg-card p-4 shadow-sm [-webkit-print-color-adjust:exact] [print-color-adjust:exact] print:aspect-auto print:w-[190mm] print:max-w-none print:gap-[6mm] print:rounded-none print:border-0 print:p-0 print:shadow-none print:break-after-page print:last:break-after-auto"
                 >
-                  {page.map((t) => <QrCard key={t.qrToken} table={t} />)}
+                  {page.map((t) => <QrCard key={t.qrToken} table={t} canteenName={canteenName} />)}
                 </div>
               ))}
             </div>

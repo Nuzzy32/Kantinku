@@ -3,7 +3,7 @@ import type { OrderItem, TenantSummary } from '@/lib/types'
 import { groupByTenant, type BuyerLine } from './buyer-cart'
 
 // Salinan beku isi pesanan saat dibayar. Keranjang dikosongkan begitu masuk fase Status.
-export type SnapshotGroup = { tenant: TenantSummary; number: string; items: OrderItem[]; subtotal: number }
+export type SnapshotGroup = { tenant: TenantSummary; number: string; items: OrderItem[]; subtotal: number; cancelReason?: string }
 export type Snapshot = { total: number; groups: SnapshotGroup[] }
 
 // Nomor antrean contoh per tenant. Nomor asli dibuat database (Story 3).

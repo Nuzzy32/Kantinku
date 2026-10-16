@@ -12,7 +12,7 @@ import { chime } from './ready-chime'
 import { StatusView, type DemoStatus } from './status-view'
 
 const PAY_SECONDS = 10 * 60
-const rank: Record<DemoStatus, number> = { paid: 0, accepted: 1, ready: 2, cancelled: 3 }
+const rank: Record<DemoStatus, number> = { paid: 0, accepted: 1, ready: 2, completed: 3, cancelled: 4 }
 
 type Phase = 'pay' | 'status' | 'expired'
 

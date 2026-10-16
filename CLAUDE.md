@@ -6,7 +6,7 @@ Sistem pesan-dan-bayar online untuk kantin kampus multi-tenant. Pembeli scan QR 
 
 | File | Isi |
 |---|---|
-| [PRD-KantinKu.md](PRD-KantinKu.md) | Apa yang dibangun dan kenapa. Fitur P0/P1/P2 dan non-goals |
+| [docs/HANDOFF.md](docs/HANDOFF.md) | Status implementasi, cara menjalankan, verifikasi, dan pekerjaan operator sebelum pilot |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, struktur folder, alur pembayaran, realtime, keamanan |
 | [docs/schema.sql](docs/schema.sql) | Skema database + RLS + fungsi bisnis (sumber kebenaran) |
 | [design/UI-SPEC.md](design/UI-SPEC.md) | Aturan UI, rute, layar per peran, microcopy. Token warna ada di `app/globals.css` |

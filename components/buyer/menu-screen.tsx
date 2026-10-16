@@ -9,6 +9,7 @@ import { CanteenCard, MenuBanner, TableBox } from './menu-header'
 import { categoriesOf, categoryId, MenuList } from './menu-list'
 import { SearchSheet } from './search-sheet'
 import { TenantSheet } from './tenant-sheet'
+import { useLiveRefresh } from './use-live-refresh'
 
 // Tinggi baris ringkas yang menempel di atas saat banner sudah tergulir: strip meja 28px (h-7) + baris kantin 48px (h-12).
 // Harus sama dengan `top-19` (76px) pada baris tab dan `scroll-mt-32` (76 + tab 48 + 4) pada kategori.
@@ -40,6 +41,8 @@ export function MenuScreen({ menu, canteenClosed }: { menu: TableMenu; canteenCl
 
   // Next menyimpan state halaman yang ditinggalkan (Activity). Sheet yang terbuka tidak boleh ikut tersimpan.
   useLayoutEffect(() => () => { setSearching(false); setPicking(false) }, [])
+
+  useLiveRefresh()
 
   // Satu pendengar gulir: baris ringkas (compact) dan kategori aktif. Dirapikan per frame.
   useEffect(() => {

@@ -6,20 +6,21 @@ import { cn } from '@/lib/utils'
 import { useMenuHref } from './buyer-cart'
 import type { Snapshot, SnapshotGroup } from './order-snapshot'
 
-export type DemoStatus = 'paid' | 'accepted' | 'ready' | 'cancelled'
+export type DemoStatus = 'paid' | 'accepted' | 'ready' | 'completed' | 'cancelled'
 
 const steps = ['Diterima', 'Dimasak', 'Siap']
-const current: Record<Exclude<DemoStatus, 'cancelled'>, number> = { paid: 0, accepted: 1, ready: 2 }
+const current: Record<Exclude<DemoStatus, 'cancelled'>, number> = { paid: 0, accepted: 1, ready: 2, completed: 2 }
 // Status = teks + warna. Pil "Siap" memakai isi hijau penuh: teks hijau di atas hijau muda kurang dari 4,5:1.
 const badge = {
   paid: { label: 'Menunggu', className: 'bg-muted text-ink-2' },
   accepted: { label: 'Dimasak', className: 'bg-warn-soft text-warn' },
   ready: { label: 'Siap', className: 'bg-success text-primary-foreground' },
+  completed: { label: 'Selesai', className: 'bg-success text-primary-foreground' },
   cancelled: { label: 'Ditolak', className: 'bg-destructive text-primary-foreground' },
 } as const
 const rejectReason = 'Bahan habis' // alasan contoh untuk mode ?demo=tolak
 
-export function StatusView({ snapshot, statuses }: { snapshot: Snapshot; statuses: Record<number, DemoStatus> }) {
+export function StatusView({ snapshot, statuses, isDemo = true, orderMenuHref }: { snapshot: Snapshot; statuses: Record<number, DemoStatus>; isDemo?: boolean; orderMenuHref?: string }) {
   const menuHref = useMenuHref()
   return (
     <div className="flex flex-1 flex-col">
@@ -32,9 +33,9 @@ export function StatusView({ snapshot, statuses }: { snapshot: Snapshot; statuse
       </div>
       <div className="flex flex-1 flex-col gap-4 p-4">
         {snapshot.groups.map((g) => (
-          <OrderCard key={g.tenant.id} group={g} status={statuses[g.tenant.id] ?? 'paid'} />
+          <OrderCard key={g.tenant.id} group={g} status={statuses[g.tenant.id] ?? 'paid'} isDemo={isDemo} />
         ))}
-        <Link href={menuHref} className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'mt-auto rounded-xl border-brand-line font-bold text-primary hover:bg-accent hover:text-accent-foreground')}>
+        <Link href={orderMenuHref ?? menuHref} className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'mt-auto rounded-xl border-brand-line font-bold text-primary hover:bg-accent hover:text-accent-foreground')}>
           Pesan lagi
         </Link>
       </div>
@@ -42,14 +43,15 @@ export function StatusView({ snapshot, statuses }: { snapshot: Snapshot; statuse
   )
 }
 
-function OrderCard({ group, status }: { group: SnapshotGroup; status: DemoStatus }) {
+function OrderCard({ group, status, isDemo }: { group: SnapshotGroup; status: DemoStatus; isDemo: boolean }) {
   const { tenant, number, items } = group
   const idx = status === 'cancelled' ? -1 : current[status]
   const text = {
     paid: `Pesanan sudah masuk. Menunggu ${tenant.name} menerima.`,
     accepted: `Sedang dimasak oleh ${tenant.name}.`,
     ready: `Siap! Ambil di ${tenant.name}, sebut nomor ${number}.`,
-    cancelled: `Ditolak: ${rejectReason}.`,
+    completed: 'Pesanan sudah selesai diambil. Terima kasih!',
+    cancelled: `Ditolak: ${group.cancelReason ?? (isDemo ? rejectReason : 'Hubungi pengelola untuk informasi lebih lanjut')}.`,
   }[status]
 
   return (
@@ -63,14 +65,14 @@ function OrderCard({ group, status }: { group: SnapshotGroup; status: DemoStatus
           <p id={`order-${number}`} className="text-2xl font-bold tracking-tight">{number}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-sm border border-border px-1 text-[11px] font-medium text-muted-foreground uppercase">demo</span>
+          {isDemo && <span className="rounded-sm border border-border px-1 text-[11px] font-medium text-muted-foreground uppercase">demo</span>}
           <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-xs leading-none font-bold', badge[status].className)}>{badge[status].label}</span>
         </div>
       </div>
 
       <ul className="mt-3 space-y-1">
-        {items.map((it) => (
-          <li key={it.name}>
+        {items.map((it, index) => (
+          <li key={`${it.name}-${index}`}>
             <span className="font-bold">{it.quantity}×</span> {it.name}
             {it.note && <span className="block text-xs text-muted-foreground">Catatan: {it.note}</span>}
           </li>
@@ -80,7 +82,7 @@ function OrderCard({ group, status }: { group: SnapshotGroup; status: DemoStatus
       {status !== 'cancelled' && (
         <ol aria-label="Progres pesanan" className="mt-4 flex items-start">
           {steps.map((label, i) => {
-            const done = i < idx || status === 'ready'
+            const done = i < idx || status === 'ready' || status === 'completed'
             const now = i === idx && !done
             const green = i === 2 && status === 'ready' // langkah terakhir yang tercapai = hijau
             const reached = i <= idx

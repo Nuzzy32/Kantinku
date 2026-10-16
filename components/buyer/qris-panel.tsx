@@ -10,11 +10,13 @@ const steps = ['Simpan atau screenshot QR', 'Buka e-wallet atau m-banking, pilih
 const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
 // Fase Bayar. `total` null = keranjang belum terbaca (hydration). Judul halaman ("Pembayaran") ada di PageHeader.
-export function QrisPanel({ total, remaining, onPaid, onSkip }: {
+export function QrisPanel({ total, remaining, onPaid, onSkip, qrImage, checking = false }: {
   total: number | null
   remaining: number
   onPaid: () => void
-  onSkip: () => void
+  onSkip?: () => void
+  qrImage?: string | null
+  checking?: boolean
 }) {
   const toast = useToast()
   return (
@@ -31,15 +33,18 @@ export function QrisPanel({ total, remaining, onPaid, onSkip }: {
         </p>
       </div>
 
-      {/* Placeholder: QR dinamis asli dari Xendit dipasang di Story 3. */}
-      <div
+      {qrImage ? (
+        // PNG lokal dari payload Xendit, tanpa layanan QR pihak ketiga.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={qrImage} width={288} height={288} alt="Kode QRIS untuk membayar pesanan" className="mx-auto aspect-square w-72 max-w-full bg-white" />
+      ) : <div
         role="img"
         aria-label="Kode QRIS untuk membayar pesanan (contoh tampilan)"
         className="mx-auto flex aspect-square w-full max-w-72 min-w-65 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-line bg-card text-muted-foreground"
       >
         <QrCode aria-hidden className="size-16" />
         <span className="text-base font-bold text-foreground">QRIS dinamis</span>
-      </div>
+      </div>}
 
       <ol className="flex flex-col gap-3">
         {steps.map((step, i) => (
@@ -55,13 +60,19 @@ export function QrisPanel({ total, remaining, onPaid, onSkip }: {
           variant="outline"
           size="lg"
           className="rounded-xl border-brand-line font-bold text-primary hover:bg-accent hover:text-accent-foreground"
-          onClick={() => toast('Gambar QR disimpan (contoh tampilan).')}
+          onClick={() => {
+            if (!qrImage) return toast('Gambar QR disimpan (contoh tampilan).')
+            const link = document.createElement('a')
+            link.href = qrImage
+            link.download = 'kantinku-qris.png'
+            link.click()
+          }}
         >
           <Download aria-hidden />
           Simpan gambar QR
         </Button>
-        <Button size="lg" className="rounded-xl font-bold" onClick={onPaid}>Saya sudah bayar</Button>
-        {process.env.NODE_ENV !== 'production' && (
+        <Button size="lg" className="rounded-xl font-bold" onClick={onPaid} disabled={checking}>{checking ? 'Memeriksa pembayaran…' : 'Saya sudah bayar'}</Button>
+        {process.env.NODE_ENV !== 'production' && onSkip && (
           <Button variant="ghost" className="border-dashed border-line-strong" onClick={onSkip}>Simulasi: lewati 10 menit</Button>
         )}
       </div>

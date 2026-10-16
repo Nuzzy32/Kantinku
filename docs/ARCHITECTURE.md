@@ -1,6 +1,6 @@
 # KantinKu — Arsitektur Teknis
 
-Dokumen ini menjelaskan **bagaimana** sistem dibangun. Untuk **apa** dan **kenapa**, lihat [PRD-KantinKu.md](../PRD-KantinKu.md).
+Dokumen ini menjelaskan **bagaimana** sistem dibangun. Untuk **apa** dan **kenapa**, lihat [user stories](TASKS.md). Status penyerahan ada di [HANDOFF.md](HANDOFF.md).
 
 ## 1. Stack
 
@@ -91,6 +91,14 @@ Aturan transisi dijaga di database (`set_order_status`), bukan hanya di UI.
 
 ### 5.1 Checkout QRIS
 
+Implementasi Story 3 menggunakan `POST https://api.xendit.co/qr_codes`, header `api-version: 2022-07-31`, autentikasi Basic dengan secret key sebagai username dan password kosong. Body: `reference_id` = public token checkout, `type: DYNAMIC`, `currency: IDR`, `amount` dari database, dan `expires_at` +10 menit. Respons diperiksa: `id`, `reference_id`, `amount`, `currency`, `type`, `qr_string`, `status: ACTIVE`, dan `expires_at`. QR dirender lokal memakai `qrcode`, tanpa mengirim payload ke layanan gambar eksternal.
+
+Sumber kontrak: [Xendit QR Codes](https://help.xendit.co/hc/en-us/articles/11664497664793-How-to-create-QR-Code-with-API-in-live-mode) dan [batas waktu QR](https://help.xendit.co/hc/en-us/articles/10877074706073-Does-QR-Code-have-expiry-time). Xendit juga menyediakan [panduan migrasi ke Payments API](https://docs.xendit.co/docs/migrate-direct-per-method-apis-to-v3); dukungan QR Codes pada akun pengelola perlu dikonfirmasi melalui spike mode test sebelum pilot. Kontrak webhook dibaca dari [dokumentasi resmi arsip QR Codes](https://archive.developers.xendit.co/api-reference/#qr-payment-callback); belum ada simulasi pembayaran dengan akun Xendit asli.
+
+`GET /api/order/[publicToken]` hanya mengembalikan data pesanan minimum, tidak menyertakan nomor WA, referensi provider, atau ID internal checkout. UUID token adalah akses pembeli ke pesanannya. Halaman tidak diindeks dan memakai referrer policy `no-referrer`. Polling database berjalan tiap 5 detik. Webhook dan POST `/api/order/[publicToken]/check` dapat mengonfirmasi pembayaran. Kedaluwarsa dihitung dari waktu tersimpan dan job cron aktif lokal (setup tiap database lewat `docs/setup-expiry.sql`). Keranjang yang cocok dikosongkan sekali setelah lunas; pesanan kedaluwarsa dapat dipulihkan tanpa menimpa keranjang baru.
+
+Batas checkout sementara: 10 percobaan per IP per menit per proses. Header IP wajib berasal dari reverse proxy tepercaya. Untuk deployment beberapa instance, gunakan pembatasan bersama di edge/database sebelum pilot. Kegagalan gateway menandai checkout `failed`; jika pencatatan kegagalan database ikut gagal, server mencatat ID checkout untuk rekonsiliasi tanpa mencetak rahasia.
+
 ```
 Pembeli            Next.js /api/checkout              Supabase               Xendit
   │ POST {items, nama, ...} │                              │                      │
@@ -112,7 +120,7 @@ Pembeli            Next.js /api/checkout              Supabase               Xen
 
 ```
 Xendit ── POST /api/webhooks/xendit ──▶ 1. Cek header x-callback-token == XENDIT_WEBHOOK_TOKEN (selain itu 401)
-                                        2. Cari checkout by provider_ref
+                                        2. Cari checkout by public_token = data.reference_id dan cocokkan provider_ref = data.qr_id
                                         3. Pastikan amount == checkout.total (selain itu log + tolak)
                                         4. Jika status sukses → rpc mark_checkout_paid(id, amount)  (idempoten; DB juga menolak jika amount ≠ total)
                                         5. Balas 200 secepatnya
@@ -120,15 +128,15 @@ Xendit ── POST /api/webhooks/xendit ──▶ 1. Cek header x-callback-token
 
 - Webhook bisa datang dua kali atau terlambat. `mark_checkout_paid` aman dipanggil berkali-kali. Pembayaran yang masuk setelah checkout `expired` tetap dicatat lunas dan pesanannya muncul lagi di tenant.
 - **Cadangan:** halaman `/order/[publicToken]` punya tombol "Saya sudah bayar". Tombol ini memanggil API yang mengecek status QR langsung ke Xendit, lalu `mark_checkout_paid` jika lunas.
-- Format payload dan nama event: **baca dokumentasi resmi Xendit QR Codes** saat implementasi. Jangan menebak.
+- Payload QR Codes versi `2022-07-31`: `event=qr.payment`, `data.status=SUCCEEDED`, `data.type=DYNAMIC`, `data.currency=IDR`, `data.qr_id`, `data.reference_id`, `data.amount`. Parser hanya menerima kontrak ini. Endpoint cadangan membaca `GET /qr_codes/:qr_id/payments`, bukan menganggap status QR sebagai bukti uang diterima. Referensi dan nominal harus cocok. Kontrak gateway diuji dengan stub; webhook HTTP produksi juga diuji memakai token sementara dan fixture Supabase lokal, termasuk callback berulang, telat, dan mendahului simpan QR.
 
 ### 5.3 Dashboard tenant (realtime)
 
-1. Tenant login, lalu halaman `/tenant` mengambil pesanan berstatus `paid | accepted | ready` hari ini.
+1. Tenant login, lalu halaman `/tenant` mengambil pesanan berstatus `paid | accepted | ready`, termasuk pekerjaan tertunda dari hari sebelumnya.
 2. Subscribe Supabase Realtime `postgres_changes` di tabel `orders` dengan filter `tenant_id=eq.<id>`, event `*`. Setiap ada event, ambil ulang daftar pesanan (lebih sederhana dan pasti benar daripada menambal state).
 3. Pesanan baru (`paid`) memicu **bunyi berulang** sampai ditekan "Terima".
 4. Browser memblokir suara sebelum ada interaksi. Karena itu, tampilkan tombol besar **"Mulai Terima Pesanan"** saat halaman dibuka. Tombol ini membuka izin audio dan mengaktifkan **Wake Lock** agar layar tidak mati.
-5. Jika koneksi realtime putus, tampilkan banner merah "Koneksi terputus" dan ambil ulang data setiap 10 detik sampai tersambung lagi.
+5. Jika koneksi realtime putus, tampilkan banner merah "Koneksi terputus" dan ambil ulang data setiap 10 detik sampai tersambung lagi. Polling juga tetap berjalan ketika tab terlihat untuk mengantisipasi event yang terlewat.
 
 ### 5.4 Status untuk pembeli
 
@@ -145,6 +153,8 @@ Kasir memilih menu di `/admin/kasir`, lalu `POST /api/checkout` dengan `payment_
 ### 5.6 Refund (MVP = manual)
 
 Tenant menolak pesanan, maka `refund_status = needed`. Pesanan muncul di `/admin/laporan` → "Perlu refund". Pengelola mengembalikan uang (transfer atau tunai), lalu menekan "Sudah direfund" (`refund_status = done`). Refund otomatis lewat API Xendit = P1, setelah dukungan refund QRIS dikonfirmasi.
+
+Story 18: laporan memfilter tanggal pembayaran WIB secara inklusif dan menjumlahkan `gross`, `canteen_share`, serta `tenant_share` dari view harian, termasuk tenant nonaktif. Pembulatan dilakukan per hari di database, bukan dihitung ulang dari total periode. Refund tertunda ditampilkan dari semua tanggal. Server Action memanggil `mark_refund_done` memakai sesi admin; RPC memeriksa peran, kantin, pembayaran, dan status batal, lalu mengunci baris sebelum mengubah `needed` ke `done`. Pengulangan aman dan tidak mengubah nominal/status pesanan. Dashboard dan laporan divalidasi ulang setelah berhasil. Semua pembacaan dipaginasi untuk menghindari batas 1.000 baris Data API.
 
 ## 6. Nomor pesanan
 

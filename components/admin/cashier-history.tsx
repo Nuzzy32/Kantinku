@@ -2,12 +2,12 @@ import { rupiah } from '@/lib/rupiah'
 import { SERVICE_LABEL, type CashSale } from './cashier-types'
 import { RowTh, TableWrap, Td, Th } from './data-table'
 
-// Riwayat pesanan tunai sesi ini (hilang saat halaman dimuat ulang; Story 16 mengambil dari database).
+
 export function CashierHistory({ sales }: { sales: CashSale[] }) {
   if (sales.length === 0) {
     return (
       <p className="rounded-lg border border-dashed bg-card p-8 text-center text-muted-foreground">
-        Belum ada pesanan tunai di sesi ini.
+        Belum ada pesanan tunai.
       </p>
     )
   }
@@ -15,9 +15,9 @@ export function CashierHistory({ sales }: { sales: CashSale[] }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
-        {sales.length} pesanan tunai · total <strong className="text-foreground">{rupiah(sum)}</strong>
+        {sales.length} pesanan tunai terbaru (maks. 100) · total <strong className="text-foreground">{rupiah(sum)}</strong>
       </p>
-      <TableWrap caption="Pesanan tunai di sesi kasir ini, terbaru di atas">
+      <TableWrap caption="100 pesanan tunai terbaru, waktu WIB">
         <thead>
           <tr>
             <Th>Jam</Th>
@@ -47,8 +47,8 @@ export function CashierHistory({ sales }: { sales: CashSale[] }) {
                 </ul>
               </Td>
               <Td right className="font-semibold">{rupiah(s.total)}</Td>
-              <Td right>{rupiah(s.received)}</Td>
-              <Td right>{rupiah(s.received - s.total)}</Td>
+              <Td right>{s.received === null ? '—' : rupiah(s.received)}</Td>
+              <Td right>{s.received === null ? '—' : rupiah(s.received - s.total)}</Td>
             </tr>
           ))}
         </tbody>

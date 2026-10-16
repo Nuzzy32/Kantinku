@@ -1,5 +1,5 @@
 // Data contoh untuk membangun UI sebelum Supabase tersambung (Story 0-2). Hapus per layar saat story datanya dikerjakan.
-import type { DiningTable, MenuItem, Refund, Tenant, TenantOrder } from './types'
+import type { MenuItem, Refund, Tenant, TenantOrder } from './types'
 
 export const canteenName = 'Kantin Teknik'
 export const demoTable = 'Meja 34'
@@ -14,7 +14,7 @@ export const tenants: Tenant[] = [
 export const myTenantId = 7 // tenant yang sedang "login" di prototype
 
 const m = (id: number, tenantId: number, category: string, name: string, price: number, isAvailable = true): MenuItem =>
-  ({ id, tenantId, category, name, price, isAvailable })
+  ({ id, tenantId, category, name, price, isAvailable, imageUrl: null })
 
 export const menuItems: MenuItem[] = [
   m(1, 3, 'Nasi', 'Nasi Rames', 15000), m(2, 3, 'Nasi', 'Nasi Telur Balado', 12000),
@@ -63,6 +63,3 @@ export const clockFromAge = (ageMin: number) => {
   return `${String(Math.floor(t / 60)).padStart(2, '0')}.${String(t % 60).padStart(2, '0')}`
 }
 export const periodGross: Record<number, number> = { 3: 5768000, 7: 6882000, 9: 3914000, 5: 2950000 }
-
-export const diningTables: DiningTable[] = ['Meja 1', 'Meja 2', 'Meja 3', 'Meja 4', 'Meja 5', 'Meja 12', 'Meja 20', 'Meja 34']
-  .map((label, i) => ({ label, qrToken: `demo-token-${String(i + 1).padStart(2, '0')}` }))

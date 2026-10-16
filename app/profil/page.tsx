@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/buyer/page-header'
 export const metadata: Metadata = { title: 'Profil' }
 
 const links: { href: string; label: string; note: string; icon: LucideIcon }[] = [
-  { href: '/order/demo', label: 'Riwayat pesanan', note: 'Lihat status pesananmu', icon: ReceiptText },
+  ...(process.env.NODE_ENV === 'production' ? [] : [{ href: '/order/demo', label: 'Simulasi status pesanan', note: 'Contoh tampilan development', icon: ReceiptText }]),
   { href: '/info', label: 'Info kantin', note: 'Alamat dan jam operasional', icon: Store },
 ]
 

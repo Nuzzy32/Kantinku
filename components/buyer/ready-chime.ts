@@ -2,7 +2,7 @@
 // "Saya sudah bayar", bunyinya baru dipanggil belasan detik kemudian.
 export function chime(ctx: AudioContext | null) {
   if (!ctx || ctx.state === 'closed') return
-  if (ctx.state !== 'running') void ctx.resume()
+  if (ctx.state !== 'running') { void ctx.resume().then(() => chime(ctx), () => {}); return } // HP layar mati menangguhkan audio
   const t0 = ctx.currentTime
   ;[880, 1175].forEach((freq, i) => {
     const t = t0 + i * 0.18

@@ -1,11 +1,11 @@
 'use client'
 import { Pill } from '@/components/pill'
 import { StatCard } from '@/components/stat-card'
-import { clockFromAge } from '@/lib/mock'
-import { canteenShare as shareOf, rupiah } from '@/lib/rupiah'
+import { rupiah } from '@/lib/rupiah'
 import type { OrderStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useTenant } from './tenant-provider'
+import type { TenantRecap } from '@/lib/tenant-orders'
 
 // Sama dengan view tenant_daily_revenue: hanya pesanan lunas yang belum ditolak.
 const COUNTED: OrderStatus[] = ['paid', 'accepted', 'ready', 'completed']
@@ -18,12 +18,11 @@ const statusPill: Partial<Record<OrderStatus, { label: string; tone: 'neutral' |
   cancelled: { label: 'Ditolak', tone: 'danger' },
 }
 
-export function RekapView() {
-  const { orders, tenant } = useTenant()
+export function RekapView({ recap }: { recap: TenantRecap }) {
+  const { tenant } = useTenant()
+  const { orders, gross, canteenShare, tenantShare, orderCount } = recap
   const counted = orders.filter((o) => COUNTED.includes(o.status))
   const rejected = orders.filter((o) => o.status === 'cancelled').length
-  const gross = counted.reduce((sum, o) => sum + o.subtotal, 0)
-  const canteenShare = shareOf(gross, tenant.sharePercent)
 
   const sold = new Map<string, number>()
   for (const o of counted) for (const i of o.items) sold.set(i.name, (sold.get(i.name) ?? 0) + i.quantity)
@@ -34,7 +33,7 @@ export function RekapView() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-base text-ink-2">Kamis, 15 Oktober 2026 · WIB</p>
+        <p className="text-base text-ink-2">{recap.dateLabel} · WIB</p>
         <h1 className="text-2xl font-extrabold tracking-tight">Uang masuk hari ini</h1>
       </div>
 
@@ -42,8 +41,8 @@ export function RekapView() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Omzet kotor" value={rupiah(gross)} />
           <StatCard label={`Bagian pengelola (${tenant.sharePercent}%)`} value={rupiah(canteenShare)} />
-          <StatCard label="Bagian kamu" value={rupiah(gross - canteenShare)} tone="brand" />
-          <StatCard label="Jumlah pesanan" value={counted.length} hint={rejected > 0 ? `${rejected} ditolak, tidak dihitung` : undefined} />
+          <StatCard label="Bagian kamu" value={rupiah(tenantShare)} tone="brand" />
+          <StatCard label="Jumlah pesanan" value={orderCount} hint={rejected > 0 ? `${rejected} ditolak, tidak dihitung` : undefined} />
         </div>
         <p className="text-sm text-muted-foreground">Pesanan yang ditolak tidak dihitung. Pesanan yang masih diproses ikut dihitung karena sudah dibayar.</p>
       </div>
@@ -91,9 +90,9 @@ export function RekapView() {
                   const pill = statusPill[o.status]!
                   const struck = o.status === 'cancelled'
                   return (
-                    <tr key={o.number} className="align-top">
+                    <tr key={o.id} className="align-top">
                       <td className={cn('px-4 py-3 font-bold', struck && 'text-muted-foreground line-through')}>{o.number}</td>
-                      <td className={cn('px-4 py-3', struck && 'text-muted-foreground line-through')}>{clockFromAge(o.ageMin)}</td>
+                      <td className={cn('px-4 py-3', struck && 'text-muted-foreground line-through')}>{new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date(o.paidAt))}</td>
                       <td className={cn('px-4 py-3', struck && 'text-muted-foreground line-through')}>{o.customerName}</td>
                       <td className={cn('px-4 py-3', struck && 'text-muted-foreground line-through')}>{o.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')}</td>
                       <td className={cn('px-4 py-3 text-right font-semibold', struck && 'text-muted-foreground line-through')}>{rupiah(o.subtotal)}</td>

@@ -18,7 +18,8 @@ const SERVICES: { value: ServiceType; icon: typeof Utensils }[] = [
 
 export type AcceptInput = { customerName: string; service: ServiceType; received: number }
 
-export function CashierCart({ groups, total, onQty, onAccept }: {
+export function CashierCart({ groups, total, pending, onQty, onAccept }: {
+  pending: boolean
   groups: CartGroup[]
   total: number
   onQty: (id: number, delta: number) => void
@@ -45,9 +46,6 @@ export function CashierCart({ groups, total, onQty, onAccept }: {
     if (next.name) return nameRef.current?.focus()
     if (!service) return serviceRef.current?.focus()
     onAccept({ customerName, service, received })
-    setName('')
-    setService(null)
-    setTender(null)
   }
 
   return (
@@ -193,8 +191,8 @@ export function CashierCart({ groups, total, onQty, onAccept }: {
             </>
           )}
         </p>
-        <Button size="lg" disabled={!canPay} onClick={accept}>
-          Terima Tunai {rupiah(total)}
+        <Button size="lg" disabled={!canPay || pending} onClick={accept}>
+          {pending ? 'Menyimpan…' : `Terima Tunai ${rupiah(total)}`}
         </Button>
       </div>
     </aside>

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
+import { supabasePublic } from '@/lib/supabase/public'
 import type { MenuItem, TenantSummary } from '@/lib/types'
 
 export type TableMenu = {
@@ -16,7 +16,7 @@ const hhmm = (t: string) => t.slice(0, 5).replace(':', '.') // "08:00:00" -> "08
 // Pembeli tidak login: dibaca dengan publishable key, RLS + GRANT kolom membatasi yang terlihat.
 export async function getTableMenu(qrToken: string): Promise<TableMenu | null> {
   if (!z.uuid().safeParse(qrToken).success) return null
-  const db = await createClient()
+  const db = supabasePublic
 
   const { data: table, error } = await db
     .from('dining_tables')
@@ -31,7 +31,7 @@ export async function getTableMenu(qrToken: string): Promise<TableMenu | null> {
     db.from('tenants').select('id, code, name, is_open').eq('canteen_id', canteen.id).eq('is_active', true).order('code'),
     db
       .from('menu_items')
-      .select('id, tenant_id, name, price, is_available, sort_order, category:menu_categories(name, sort_order), tenant:tenants!inner(canteen_id)')
+      .select('id, tenant_id, name, price, is_available, image_url, sort_order, category:menu_categories(name, sort_order), tenant:tenants!inner(canteen_id)')
       .eq('tenant.canteen_id', canteen.id),
   ])
   if (tenantsRes.error) throw tenantsRes.error
@@ -51,6 +51,7 @@ export async function getTableMenu(qrToken: string): Promise<TableMenu | null> {
       name: r.name,
       price: r.price,
       isAvailable: r.is_available,
+      imageUrl: r.image_url,
     }))
 
   return {

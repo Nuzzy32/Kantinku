@@ -10,16 +10,21 @@ import { useTenant } from './tenant-provider'
 const REASONS = ['Bahan habis', 'Tutup', 'Lainnya'] as const
 
 // Form berada di dalam DialogContent: terpasang ulang tiap dialog dibuka, jadi isian selalu mulai bersih.
-function RejectForm({ number, onClose }: { number: string; onClose: () => void }) {
+function RejectForm({ id, number, onClose }: { id: number; number: string; onClose: () => void }) {
   const { moveOrder } = useTenant()
   const toast = useToast()
   const [choice, setChoice] = useState<(typeof REASONS)[number]>('Bahan habis')
   const [other, setOther] = useState('')
+  const [pending, setPending] = useState(false)
   const reason = choice === 'Lainnya' ? other.trim() : choice
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!reason || !moveOrder(number, 'cancelled', reason)) return
+    if (!reason || pending) return
+    setPending(true)
+    const saved = await moveOrder(id, 'cancelled', reason)
+    setPending(false)
+    if (!saved) return
     toast(`${number} ditolak. Pembeli melihat alasannya.`)
     onClose()
   }
@@ -49,10 +54,10 @@ function RejectForm({ number, onClose }: { number: string; onClose: () => void }
         </div>
       )}
       <DialogFooter>
-        <Button type="button" variant="outline" size="lg" onClick={onClose}>
+        <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending}>
           Batal
         </Button>
-        <Button type="submit" variant="destructive" size="lg" disabled={!reason}>
+        <Button type="submit" variant="destructive" size="lg" disabled={!reason || pending} aria-busy={pending}>
           Tolak pesanan
         </Button>
       </DialogFooter>
@@ -60,11 +65,11 @@ function RejectForm({ number, onClose }: { number: string; onClose: () => void }
   )
 }
 
-export function RejectDialog({ number, open, onOpenChange }: { number: string; open: boolean; onOpenChange: (open: boolean) => void }) {
+export function RejectDialog({ id, number, open, onOpenChange }: { id: number; number: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <RejectForm number={number} onClose={() => onOpenChange(false)} />
+        <RejectForm id={id} number={number} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   )

@@ -1,7 +1,7 @@
 # KantinKu — Spesifikasi UI
 
 Sumber: prototype Claude Design (tenant, kasir, pengelola) + halaman self-order ESB Kantin GOR (pembeli), lalu diperbaiki.
-Tahap sekarang: **layar dengan data contoh** (`lib/mock.ts`). Supabase/Xendit disambung per story di `docs/TASKS.md`.
+Tahap sekarang: menu dan operasional staf memakai Supabase; jalur QRIS memerlukan kunci Xendit dan uji gateway nyata. Status verifikasi ada di `docs/TASKS.md` dan `docs/HANDOFF.md`.
 
 ## Aturan umum
 
@@ -91,7 +91,7 @@ Header 64px: kode T7 + "Mie Mas Joko", tab Antrean · Menu · Rekap (tab aktif j
 - Strip **Ringkasan masak** di atas: total item dari kolom Baru + Dimasak ("Mie Ayam ×5 · Bakso Urat ×2"). Sembunyi bila kosong.
 - Kartu: nomor besar (T7-039), umur ("5 mnt", warna netral < 5 mnt, kuning 5–9, merah ≥ 10, tidak untuk Siap), nama pembeli, "Meja 5 · Bawa pulang" atau "Kasir · Tunai", daftar item (jumlah tebal), catatan item di kotak kuning (`bg-warn-soft text-warn`).
 - Aksi (≥56px): Baru → **Terima** + Tolak. Dimasak → **Siap** + Tolak (kecil). Siap → **Selesai diambil**. Transisi sah mengikuti `docs/schema.sql`: paid → accepted|cancelled, accepted → ready|cancelled, ready → completed.
-- Setelah Terima/Siap/Selesai muncul toast "Urungkan" 6 detik yang mengembalikan status sebelumnya.
+- Terima/Siap/Selesai langsung disimpan lewat RPC dengan tombol nonaktif saat proses. Kegagalan mengembalikan tampilan sebelumnya. Tidak ada Urungkan untuk status yang sudah tersimpan karena transisi balik dilarang database.
 - Tolak: dialog "Tolak pesanan T7-039?", pilihan alasan (Bahan habis / Tutup / Lainnya), "Lainnya" wajib teks. Tombol "Tolak pesanan" disabled bila belum valid. Pesan: "Pembeli melihat alasannya. Uang dikembalikan pengelola."
 - Bunyi: bip berulang (WebAudio, tiap ±2,4 dtk) selama ada pesanan Baru, berhenti saat tidak ada. Tombol **Bisukan/Nyalakan suara** terlihat di header antrean. Kolom kosong punya teks ("Belum ada pesanan baru. Tablet berbunyi saat ada yang masuk.").
 - Data: salin `tenantOrders` ke state lokal. Umur = `ageMin` + menit sejak halaman dibuka (ticker `setInterval` di effect; render pertama tanpa `Date.now()`).
@@ -99,7 +99,7 @@ Header 64px: kode T7 + "Mie Mas Joko", tab Antrean · Menu · Rekap (tab aktif j
 ### B2. Menu `/tenant/menu`
 - Judul "Menu", keterangan "Saklar Habis langsung terlihat di HP pembeli.", kolom cari, tombol **Tambah menu**.
 - Daftar per kategori; baris ≥ 56px: nama, harga, `Switch` + teks "Tersedia"/"Habis", tombol Edit, tombol hapus (ikon, `aria-label`). Hapus = soft delete + toast "Urungkan" ("Riwayat pesanan lama tetap utuh.").
-- Dialog Tambah/Edit: nama, harga (angka saja, > 0), kategori (chip dari kategori yang ada + "Kategori baru"), kotak foto placeholder "Foto · maks 300KB" (belum aktif). Error: "Isi nama dan harga lebih dari 0."
+- Dialog Tambah/Edit: nama, harga (angka saja, > 0), kategori (chip dari kategori yang ada + "Kategori baru"), foto opsional (dikompres di browser ke WebP ≤ 300KB, diperiksa ulang di server, disimpan di bucket `menu-photos`). Error: "Isi nama dan harga lebih dari 0."
 - Data: `menuItems` milik tenant 7 di state lokal.
 
 ### B3. Rekap `/tenant/rekap`
@@ -116,22 +116,22 @@ Header 64px: kode T7 + "Mie Mas Joko", tab Antrean · Menu · Rekap (tab aktif j
 Bilah atas: KantinKu · "Pengelola · Kantin Teknik", navigasi Dashboard · Tenant · Meja & QR · Kasir · Laporan (badge jumlah refund di Laporan), nama + peran, keluar. **Kasir hanya melihat menu Kasir**: peran `cashier` (dari profil) hanya melihat nav Kasir, halaman lain dialihkan ke `/admin/kasir`.
 
 ### C1. Dashboard `/admin`
-Tiga kartu: Omzet hari ini, Pesanan aktif (hitung nyata dari data contoh, tanpa angka karangan), **Perlu refund** (merah bila > 0, bisa diklik ke Laporan). Tabel per tenant: kode, nama, status Buka/Tutup (`Pill`), pesanan, omzet + batang proporsional omzet (div dengan lebar %, teks angka tetap ada).
+Tiga kartu: Omzet hari ini, Pesanan aktif (hitung dari database kantin, tanpa angka karangan), **Perlu refund** (merah bila > 0, bisa diklik ke Laporan). Tabel per tenant: kode, nama, status Buka/Tutup (`Pill`), pesanan, omzet + batang proporsional omzet (div dengan lebar %, teks angka tetap ada).
 
 ### C2. Tenant `/admin/tenant`
-Tabel: kode, nama, jenis, bagi hasil %, akun login (email), tombol Nonaktifkan/Aktifkan. Dialog **Tambah tenant** (kode, nama, bagi hasil %, email; wajib semua, error ramah, toast "Tenant & akun dibuat. Kirim kata sandi sementara ke tenant."). Tenant nonaktif redup.
+Tabel: kode, nama, bagi hasil %, akun login (email), tombol Edit dan Nonaktifkan/Aktifkan. Dialog **Tambah tenant** (kode, nama, bagi hasil %, email; wajib semua, error ramah). Setelah dibuat, dialog menampilkan **kata sandi sementara sekali saja** + tombol salin. Edit tidak mengubah email. Tenant nonaktif redup, hilang dari menu pembeli, dan dashboard tenantnya menampilkan "Toko sedang dinonaktifkan". Bagian **Akun kasir**: daftar kasir + dialog tambah (nama, email).
 
 ### C3. Meja & QR `/admin/meja`
-Kiri: tambah meja (label unik, error "Label meja sudah dipakai."), daftar meja dengan kotak centang dan tautan `/t/<token>`. Kanan: **pratinjau A4** (maks 4 kartu per halaman): "Pesan di Sini!", label meja, kotak QR placeholder, 3 langkah (Scan → Bayar QRIS → Ambil). Tombol "Cetak QR" memanggil `window.print()`; CSS cetak hanya menampilkan pratinjau. QR sungguhan (butuh paket `qrcode`) dikerjakan di Story 15, bukan sekarang.
+Kiri: tambah meja (label unik, error "Label meja sudah dipakai."), daftar meja dengan kotak centang dan tautan `/t/<token>`. Kanan: **pratinjau A4** (maks 4 kartu per halaman): nama kantin, "Pesan di Sini!", label meja, QR asli (SVG dibuat server dengan paket `qrcode`, isi `NEXT_PUBLIC_APP_URL/t/<qr_token>`), 3 langkah (Scan → Bayar QRIS → Ambil). Tombol "Cetak QR" memanggil `window.print()`; CSS cetak hanya menampilkan pratinjau.
 
 ### C4. Kasir `/admin/kasir`
 - Kiri: kolom cari + chip filter tenant. Menu dikelompokkan per tenant. Tenant tutup tetap tampil, terlipat dengan label "Tutup" (tidak disembunyikan diam-diam). Menu habis tidak bisa ditambah. Kotak menu ≥ 56px, menampilkan jumlah di keranjang.
 - Kanan: keranjang (stepper), nama pembeli (wajib), **Cara makan** (Makan di sini / Bawa pulang, wajib karena `create_checkout` butuh `service_type`), **Uang diterima**: tombol cepat Pas / Rp20.000 / Rp50.000 / Rp100.000 + isian angka, tampilkan **Kembalian** (atau "Uang kurang Rp…" merah bila kurang; tombol disabled). Tombol "Terima Tunai Rp…".
-- Setelah terima: toast "Tunai Rp… diterima · masuk ke T7-041, T9-020", keranjang kosong. Tab **Riwayat** menampilkan pesanan tunai sesi ini.
-- Pesanan tunai hanya soal tampilan di tahap ini (state lokal).
+- Setelah terima: toast "Tunai Rp… diterima · masuk ke T7-041, T9-020", keranjang kosong. Tab **Riwayat** menampilkan 100 transaksi tunai terbaru dari database kantin.
+- Pesanan tunai tersimpan lewat RPC server dengan UUID retry idempoten, harga database, dan validasi uang diterima. Toast sukses menampilkan total, uang diterima, dan kembalian sebenarnya dari DB.
 
 ### C5. Laporan `/admin/laporan`
-Filter tanggal Dari/Sampai (`type="date"`). Tabel bagi hasil per tenant: kode, nama, %, omzet, bagian pengelola, bagian tenant, baris total (dari `periodGross`). Daftar **Perlu refund**: nomor, tenant, pembeli, nominal, alasan, tombol "Sudah direfund" (dialog konfirmasi singkat) → tampil "Selesai". Kosong: "Tidak ada refund."
+Filter tanggal Dari/Sampai (`type="date"`) + tombol "Tampilkan laporan", periode tersimpan di URL. Tabel bagi hasil per tenant: kode, nama, %, omzet, bagian pengelola, bagian tenant, baris total dari view harian Supabase; tanggal pembayaran WIB, inklusif, pesanan ditolak dikecualikan. Tenant nonaktif tetap tercatat. Daftar **Perlu refund** dari semua tanggal: nomor, tenant, pembeli, nominal, alasan, tombol "Sudah direfund" (dialog konfirmasi singkat). Simpan nonaktif saat proses; gagal tetap di dialog dengan pesan. Berhasil menampilkan "Selesai" lalu menyegarkan data sehingga pesanan keluar dari daftar tertunda. Kosong: "Tidak ada refund." Tidak melakukan transfer uang.
 
 ---
 

@@ -1,12 +1,13 @@
 'use client'
-import { Suspense } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { ClipboardList, LogOut, ReceiptText, UtensilsCrossed, WifiOff } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { buttonVariants } from '@/components/ui/button'
 import { useToast } from '@/components/toast'
 import { signOut } from '@/app/actions/auth'
+import { setShopOpen as saveShopOpen } from '@/app/tenant/(app)/actions'
 import { cn } from '@/lib/utils'
 import { useTenant } from './tenant-provider'
 
@@ -16,9 +17,9 @@ const tabs = [
   { href: '/tenant/rekap', label: 'Rekap', icon: ReceiptText },
 ]
 
-// Hanya untuk melihat tampilannya: /tenant?offline=1. Pengambilan ulang data sungguhan dikerjakan di story Supabase.
 function OfflineBanner() {
-  if (useSearchParams().get('offline') !== '1') return null
+  const { offline } = useTenant()
+  if (!offline) return null
   return (
     <div role="alert" className="flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-base font-semibold text-primary-foreground">
       <WifiOff className="size-5 shrink-0" aria-hidden />
@@ -30,15 +31,37 @@ function OfflineBanner() {
 function ShopSwitch() {
   const { shopOpen, setShopOpen } = useTenant()
   const toast = useToast()
-  const change = (open: boolean) => {
+  const saving = useRef(false)
+  const [pending, setPending] = useState(false)
+  // Satu penyimpanan pada satu waktu supaya respons lambat tidak membalik status terbaru.
+  const save = async (open: boolean) => {
+    if (saving.current) return 'Status toko sedang disimpan.'
+    saving.current = true
+    setPending(true)
+    const previous = shopOpen
     setShopOpen(open)
+    try {
+      const { error } = await saveShopOpen(open)
+      if (error) setShopOpen(previous)
+      return error
+    } catch {
+      setShopOpen(previous)
+      return 'Gagal mengubah status toko. Coba lagi.'
+    } finally {
+      saving.current = false
+      setPending(false)
+    }
+  }
+  const change = async (open: boolean) => {
+    const error = await save(open)
+    if (error) return toast(error)
     // Tutup tak sengaja (tangan basah) harus mudah dibatalkan.
     if (open) toast('Toko dibuka. Pembeli bisa memesan.')
-    else toast('Toko ditutup. Pembeli tidak bisa memesan.', { label: 'Urungkan', onClick: () => setShopOpen(true) })
+    else toast('Toko ditutup. Pembeli tidak bisa memesan.', { label: 'Urungkan', onClick: () => void save(true).then((e) => e && toast(e)) })
   }
   return (
     <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg px-2">
-      <Switch checked={shopOpen} onCheckedChange={change} />
+      <Switch checked={shopOpen} onCheckedChange={change} disabled={pending} aria-label="Buka toko" aria-busy={pending} />
       <span className="flex flex-col leading-tight">
         <span className="text-xs font-medium text-muted-foreground">Toko</span>
         <span className={cn('text-base font-extrabold', shopOpen ? 'text-primary' : 'text-destructive')}>{shopOpen ? 'BUKA' : 'TUTUP'}</span>
@@ -59,9 +82,7 @@ export function TenantShell({ children }: { children: React.ReactNode }) {
         Lewati ke konten
       </a>
       <div className="sticky top-0 z-30">
-        <Suspense fallback={null}>
-          <OfflineBanner />
-        </Suspense>
+        <OfflineBanner />
         <header className="border-b bg-card">
           <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4">
             <div className="flex min-w-0 items-center gap-2">
