@@ -3,7 +3,7 @@ import { BellRing, Check, Clock, PackageCheck, TriangleAlert, X } from 'lucide-r
 import { Button } from '@/components/ui/button'
 import { Pill } from '@/components/pill'
 import { useToast } from '@/components/toast'
-import type { TenantOrder } from '@/lib/types'
+import type { LiveTenantOrder } from '@/lib/tenant-order-data'
 import { canReject, forwardStatus, useTenant } from './tenant-provider'
 
 const service = { dine_in: 'Makan di sini', takeaway: 'Bawa pulang' } as const
@@ -27,19 +27,18 @@ function AgeBadge({ minutes }: { minutes: number }) {
   )
 }
 
-export function OrderCard({ order, onReject }: { order: TenantOrder; onReject: (order: TenantOrder) => void }) {
-  const { moveOrder, undoOrder, elapsedMin } = useTenant()
+export function OrderCard({ order, onReject }: { order: LiveTenantOrder; onReject: (order: LiveTenantOrder) => void }) {
+  const { moveOrder, pending, elapsedMin } = useTenant()
   const toast = useToast()
   const to = forwardStatus(order.status)
   const step = order.status === 'paid' || order.status === 'accepted' || order.status === 'ready' ? forward[order.status] : null
 
-  const advance = () => {
-    if (!to || !step || !moveOrder(order.number, to)) return
-    const from = order.status
-    toast(`${order.number} ${step.done}.`, { label: 'Urungkan', onClick: () => undoOrder(order.number, from, to) })
+  const advance = async () => {
+    if (!to || !step) return
+    if (await moveOrder(order.id, to)) toast(`${order.number} ${step.done}.`)
   }
 
-  const where = order.tableLabel ? `${order.tableLabel} · ${service[order.serviceType]}` : `Kasir · Tunai · ${service[order.serviceType]}`
+  const where = order.tableLabel ? `${order.tableLabel} · ${service[order.serviceType]}` : `${order.paymentMethod === 'cash' ? 'Kasir · Tunai' : 'Tanpa meja · QRIS'} · ${service[order.serviceType]}`
 
   return (
     <article aria-label={`Pesanan ${order.number}`} className="flex flex-col gap-3 rounded-lg border bg-card p-4">
@@ -63,12 +62,12 @@ export function OrderCard({ order, onReject }: { order: TenantOrder; onReject: (
       </ul>
       {step && (
         <div className="mt-1 flex gap-2">
-          <Button size="lg" className="flex-1" onClick={advance}>
+          <Button size="lg" className="flex-1" onClick={advance} disabled={pending.includes(order.id)} aria-busy={pending.includes(order.id)}>
             <step.Icon aria-hidden />
             {step.label}
           </Button>
           {canReject(order.status) && (
-            <Button variant="destructive" size={order.status === 'paid' ? 'lg' : 'default'} onClick={() => onReject(order)}>
+            <Button variant="destructive" size={order.status === 'paid' ? 'lg' : 'default'} onClick={() => onReject(order)} disabled={pending.includes(order.id)}>
               <X aria-hidden />
               Tolak
             </Button>

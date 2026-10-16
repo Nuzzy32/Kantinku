@@ -31,6 +31,7 @@ export async function AdminShell({ section, children }: { section: AdminSection;
     isCashier ? null : db.from('orders').select('id, tenant:tenants!inner(canteen_id)', { count: 'exact', head: true })
       .eq('tenant.canteen_id', profile.canteen_id).eq('refund_status', 'needed'),
   ])
+  if (canteen.error || refunds?.error) throw new Error('Navigasi pengelola belum bisa dimuat.', { cause: canteen.error ?? refunds?.error })
   const canteenName = canteen.data?.name ?? ''
   const refundCount = refunds?.count ?? 0
 

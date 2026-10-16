@@ -21,14 +21,14 @@ export type Database = {
                   ]
                 },"checkouts": {
                   Row: {
-                    "canteen_id": number,"created_at": string,"created_by": string | null,"customer_name": string,"customer_phone": string | null,"dining_table_id": number | null,"expires_at": string | null,"id": number,"paid_at": string | null,"payment_method": Database["public"]['Enums']["payment_method"],"payment_status": Database["public"]['Enums']["payment_status"],"provider_ref": string | null,"public_token": string,"qr_string": string | null,"service_type": Database["public"]['Enums']["service_type"],"total": number
+                    "canteen_id": number,"cash_received": number | null,"cash_request_hash": string | null,"cash_request_id": string | null,"created_at": string,"created_by": string | null,"customer_name": string,"customer_phone": string | null,"dining_table_id": number | null,"expires_at": string | null,"id": number,"paid_at": string | null,"payment_method": Database["public"]['Enums']["payment_method"],"payment_status": Database["public"]['Enums']["payment_status"],"provider_ref": string | null,"public_token": string,"qr_string": string | null,"service_type": Database["public"]['Enums']["service_type"],"total": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "canteen_id": number,"created_at"?: string,"created_by"?: string | null,"customer_name": string,"customer_phone"?: string | null,"dining_table_id"?: number | null,"expires_at"?: string | null,"id"?: never,"paid_at"?: string | null,"payment_method": Database["public"]['Enums']["payment_method"],"payment_status"?: Database["public"]['Enums']["payment_status"],"provider_ref"?: string | null,"public_token"?: string,"qr_string"?: string | null,"service_type": Database["public"]['Enums']["service_type"],"total": number
+                    "canteen_id": number,"cash_received"?: number | null,"cash_request_hash"?: string | null,"cash_request_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_name": string,"customer_phone"?: string | null,"dining_table_id"?: number | null,"expires_at"?: string | null,"id"?: never,"paid_at"?: string | null,"payment_method": Database["public"]['Enums']["payment_method"],"payment_status"?: Database["public"]['Enums']["payment_status"],"provider_ref"?: string | null,"public_token"?: string,"qr_string"?: string | null,"service_type": Database["public"]['Enums']["service_type"],"total": number
                   }
                   Update: {
-                    "canteen_id"?: number,"created_at"?: string,"created_by"?: string | null,"customer_name"?: string,"customer_phone"?: string | null,"dining_table_id"?: number | null,"expires_at"?: string | null,"id"?: never,"paid_at"?: string | null,"payment_method"?: Database["public"]['Enums']["payment_method"],"payment_status"?: Database["public"]['Enums']["payment_status"],"provider_ref"?: string | null,"public_token"?: string,"qr_string"?: string | null,"service_type"?: Database["public"]['Enums']["service_type"],"total"?: number
+                    "canteen_id"?: number,"cash_received"?: number | null,"cash_request_hash"?: string | null,"cash_request_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"customer_name"?: string,"customer_phone"?: string | null,"dining_table_id"?: number | null,"expires_at"?: string | null,"id"?: never,"paid_at"?: string | null,"payment_method"?: Database["public"]['Enums']["payment_method"],"payment_status"?: Database["public"]['Enums']["payment_status"],"provider_ref"?: string | null,"public_token"?: string,"qr_string"?: string | null,"service_type"?: Database["public"]['Enums']["service_type"],"total"?: number
                   }
                   Relationships: [
                     {
@@ -229,9 +229,40 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "create_checkout":
+            "create_cash_checkout":
+{ Args: { "p_canteen_id": number,"p_cash_received": number,"p_created_by": string,"p_customer_name": string,"p_items": Json,"p_request_id": string,"p_service_type": Database["public"]['Enums']["service_type"] }; Returns: {
+              "canteen_id": number,
+"cash_received": number | null,
+"cash_request_hash": string | null,
+"cash_request_id": string | null,
+"created_at": string,
+"created_by": string | null,
+"customer_name": string,
+"customer_phone": string | null,
+"dining_table_id": number | null,
+"expires_at": string | null,
+"id": number,
+"paid_at": string | null,
+"payment_method": Database["public"]['Enums']["payment_method"],
+"payment_status": Database["public"]['Enums']["payment_status"],
+"provider_ref": string | null,
+"public_token": string,
+"qr_string": string | null,
+"service_type": Database["public"]['Enums']["service_type"],
+"total": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "checkouts"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"create_checkout":
 { Args: { "p_canteen_id": number,"p_created_by"?: string,"p_customer_name": string,"p_customer_phone": string,"p_items": Json,"p_payment_method": Database["public"]['Enums']["payment_method"],"p_service_type": Database["public"]['Enums']["service_type"],"p_table_token": string }; Returns: {
               "canteen_id": number,
+"cash_received": number | null,
+"cash_request_hash": string | null,
+"cash_request_id": string | null,
 "created_at": string,
 "created_by": string | null,
 "customer_name": string,
@@ -260,6 +291,9 @@ isOneToOne: false
 "mark_checkout_paid":
 { Args: { "p_amount": number,"p_checkout_id": number }; Returns: {
               "canteen_id": number,
+"cash_received": number | null,
+"cash_request_hash": string | null,
+"cash_request_id": string | null,
 "created_at": string,
 "created_by": string | null,
 "customer_name": string,
@@ -279,6 +313,27 @@ isOneToOne: false
                           SetofOptions: {
         from: "*"
         to: "checkouts"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"mark_refund_done":
+{ Args: { "p_order_id": number }; Returns: {
+              "accepted_at": string | null,
+"cancel_reason": string | null,
+"checkout_id": number,
+"completed_at": string | null,
+"created_at": string,
+"id": number,
+"paid_at": string | null,
+"ready_at": string | null,
+"refund_status": Database["public"]['Enums']["refund_status"],
+"status": Database["public"]['Enums']["order_status"],
+"subtotal": number,
+"tenant_id": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "orders"
         isOneToOne: true
         isSetofReturn: false
       } },

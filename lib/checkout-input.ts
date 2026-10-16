@@ -12,4 +12,4 @@ export const checkoutInput = z.object({
     quantity: z.number().int().min(1).max(50),
     note: z.string().max(100).default(''),
   }).strict()).min(1).max(100),
-}).strict()
+}).strict().refine((value) => new Set(value.items.map((item) => item.menu_item_id)).size === value.items.length)

@@ -51,6 +51,27 @@ function write(key: string, cart: Cart) {
 
 export const cartKey = (canteenSlug: string, table: string) => `kantinku-cart:${canteenSlug}:${table}`
 
+const settled = new Set<string>()
+export function settlePaidCart(key: string, ordered: Cart, token: string) {
+  const marker = `kantinku-paid:${token}`
+  if (settled.has(token)) return
+  try { if (localStorage.getItem(marker)) return } catch {}
+  const current = read(key)
+  // Jangan hapus keranjang baru yang diubah pembeli saat pesanan lama sedang dibayar.
+  const same = Object.keys(current).length === Object.keys(ordered).length
+    && Object.entries(ordered).every(([id, line]) => current[Number(id)]?.quantity === line.quantity && current[Number(id)]?.note === line.note)
+  if (same) write(key, EMPTY)
+  settled.add(token)
+  try { localStorage.setItem(marker, '1') } catch {}
+}
+
+export function restoreCart(key: string, ordered: Cart) {
+  const current = read(key)
+  // Keranjang asli mungkin masih ada; jangan gandakan jumlah atau menimpa catatan yang baru.
+  const next = { ...sanitize(ordered), ...current }
+  write(key, next)
+}
+
 // key null = belum tahu meja mana (mis. halaman dibuka tanpa token): keranjang kosong, tidak menulis apa pun.
 export function useCart(key: string | null) {
   const subscribe = useCallback((cb: () => void) => {

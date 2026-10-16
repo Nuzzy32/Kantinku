@@ -1,8 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { acceptCash } from '@/app/admin/kasir/actions'
+import type { MenuItem, TenantSummary } from '@/lib/types'
 import { Tabs } from '@base-ui/react/tabs'
 import { useToast } from '@/components/toast'
-import { menuItems, refunds, tenantOrders, tenants } from '@/lib/mock'
 import { rupiah } from '@/lib/rupiah'
 import { CashierCart, type AcceptInput } from './cashier-cart'
 import { CashierHistory } from './cashier-history'
@@ -12,20 +14,15 @@ import { MAX_QTY, type CartGroup, type CashSale } from './cashier-types'
 const tabClass =
   '-mb-px inline-flex h-14 items-center gap-2 border-b-2 border-transparent px-4 font-semibold text-ink-2 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-active:border-primary data-active:text-foreground'
 
-// Nomor pesanan berikutnya per tenant = nomor terbesar yang sudah ada + 1 (data contoh dan sesi ini).
-const seedNumbers = [...tenantOrders, ...refunds].map((x) => x.number)
-function nextNumber(code: string, taken: string[]) {
-  const last = Math.max(0, ...taken.filter((n) => n.startsWith(`${code}-`)).map((n) => Number(n.slice(code.length + 1))))
-  return `${code}-${String(last + 1).padStart(3, '0')}`
-}
-
-const clock = (d: Date) => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`
-
-// Pesanan tunai hanya soal tampilan (state lokal). Story 16: panggil create_checkout(payment_method = 'cash').
-export function Cashier() {
+export function Cashier({ tenants, items: menuItems, sales }: { tenants: TenantSummary[]; items: MenuItem[]; sales: CashSale[] }) {
   const toast = useToast()
-  const [cart, setCart] = useState<Record<number, number>>({}) // menu_item_id -> jumlah
-  const [sales, setSales] = useState<CashSale[]>([])
+  const router = useRouter()
+  const [cart, setCart] = useState<Record<number, number>>({})
+  const [pending, startTransition] = useTransition()
+  const submitting = useRef(false)
+  const request = useRef<{ payload: string; id: string } | null>(null)
+  const [reset, setReset] = useState(0)
+  const [error, setError] = useState('')
 
   const changeQty = (id: number, delta: number) =>
     setCart((prev) => {
@@ -42,17 +39,28 @@ export function Cashier() {
   })
   const total = groups.reduce((a, g) => a + g.subtotal, 0)
 
-  const accept = ({ customerName, service, received }: AcceptInput) => {
-    const taken = [...seedNumbers, ...sales.flatMap((s) => s.parts.map((p) => p.number))]
-    const parts = groups.map((g) => ({
-      number: nextNumber(g.tenant.code, taken),
-      tenantName: g.tenant.name,
-      items: g.lines.map((l) => `${l.qty}× ${l.item.name}`).join(', '),
-      subtotal: g.subtotal,
-    }))
-    setSales((prev) => [{ id: prev.length + 1, time: clock(new Date()), customerName, service, total, received, parts }, ...prev])
-    setCart({})
-    toast(`Tunai ${rupiah(total)} diterima · masuk ke ${parts.map((p) => p.number).join(', ')}`)
+  const accept = (input: AcceptInput) => {
+    if (submitting.current) return
+    submitting.current = true
+    setError('')
+    const items = groups.flatMap((g) => g.lines.map((line) => ({ menu_item_id: line.item.id, quantity: line.qty })))
+    const payload = JSON.stringify({ ...input, items })
+    if (request.current?.payload !== payload) request.current = { payload, id: crypto.randomUUID() }
+    const requestId = request.current.id
+    startTransition(async () => {
+      try {
+        const result = await acceptCash({ ...input, items, requestId })
+        if (result.error) { setError(result.error); if (result.status === 409) router.refresh(); return }
+        setCart({})
+        request.current = null
+        setReset((value) => value + 1)
+        toast(`Transaksi #${result.checkoutId} · total ${rupiah(result.total!)} · diterima ${rupiah(result.received!)} · kembalian ${rupiah(result.change!)}. Nomor pesanan ada di Riwayat.`)
+      } catch {
+        setError('Koneksi terputus. Periksa riwayat; mencoba lagi dengan data yang sama tidak menggandakan transaksi.')
+      } finally {
+        submitting.current = false
+      }
+    })
   }
 
   return (
@@ -73,10 +81,11 @@ export function Cashier() {
 
         {/* keepMounted: pencarian, nama, dan uang diterima tidak hilang saat melihat Riwayat. */}
         <Tabs.Panel value="pesanan" keepMounted className="pt-4 outline-none">
-          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_22rem] lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <CashierMenu cart={cart} onAdd={(id) => changeQty(id, 1)} />
-            <CashierCart groups={groups} total={total} onQty={changeQty} onAccept={accept} />
-          </div>
+          {error && <p role="alert" className="mb-4 text-sm font-semibold text-destructive">{error}</p>}
+          <fieldset disabled={pending} className="grid min-w-0 items-start gap-6 md:grid-cols-[minmax(0,1fr)_22rem] lg:grid-cols-[minmax(0,1fr)_24rem]">
+            <CashierMenu tenants={tenants} menuItems={menuItems} cart={cart} onAdd={(id) => changeQty(id, 1)} />
+            <CashierCart key={reset} pending={pending} groups={groups} total={total} onQty={changeQty} onAccept={accept} />
+          </fieldset>
         </Tabs.Panel>
         <Tabs.Panel value="riwayat" className="pt-4 outline-none">
           <CashierHistory sales={sales} />

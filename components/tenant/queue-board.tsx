@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { OrderStatus, TenantOrder } from '@/lib/types'
+import type { OrderStatus } from '@/lib/types'
+import type { LiveTenantOrder } from '@/lib/tenant-order-data'
 import { cn } from '@/lib/utils'
 import { CookSummary } from './cook-summary'
 import { OrderCard } from './order-card'
@@ -20,10 +21,10 @@ function Board() {
   const { orders, newCount, muted, setMuted } = useTenant()
   const [tab, setTab] = useState<OrderStatus>('paid')
   const [rejectOpen, setRejectOpen] = useState(false)
-  const [rejectNumber, setRejectNumber] = useState('')
+  const [rejectOrder, setRejectOrder] = useState<LiveTenantOrder | null>(null)
 
-  const reject = (order: TenantOrder) => {
-    setRejectNumber(order.number)
+  const reject = (order: LiveTenantOrder) => {
+    setRejectOrder(order)
     setRejectOpen(true)
   }
   // Tertua di atas: yang menunggu paling lama dikerjakan lebih dulu.
@@ -76,14 +77,14 @@ function Board() {
               {list.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-line-strong px-4 py-6 text-center text-base text-muted-foreground">{empty}</p>
               ) : (
-                list.map((o) => <OrderCard key={o.number} order={o} onReject={reject} />)
+                list.map((o) => <OrderCard key={o.id} order={o} onReject={reject} />)
               )}
             </section>
           )
         })}
       </div>
 
-      <RejectDialog number={rejectNumber} open={rejectOpen} onOpenChange={setRejectOpen} />
+      <RejectDialog id={rejectOrder?.id ?? 0} number={rejectOrder?.number ?? ''} open={rejectOpen} onOpenChange={setRejectOpen} />
     </div>
   )
 }

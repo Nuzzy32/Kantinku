@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const qr = await createQr(checkout.public_token, checkout.total, expiresAt)
     const { data: saved, error: saveError } = await supabaseAdmin.from('checkouts').update({
       provider_ref: qr.id, qr_string: qr.qr_string, expires_at: qr.expires_at,
-    }).eq('id', checkout.id).eq('payment_status', 'pending').select('id').maybeSingle()
+    }).eq('id', checkout.id).select('id').maybeSingle() // webhook bisa lebih dulu menandai lunas
     if (saveError || !saved) throw saveError ?? new Error('Checkout tidak tersimpan')
     return Response.json({ publicToken: checkout.public_token }, { status: 201, headers: { 'Cache-Control': 'no-store' } })
   } catch {

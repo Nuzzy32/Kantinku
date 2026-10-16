@@ -12,8 +12,15 @@
     "test:buyer": "node --test docs/buyer.test.mjs",
     "test:menu": "node --test docs/menu.test.mjs",
     "test:dashboard": "node --test docs/dashboard.test.mjs",
+    "test:report": "node --test docs/report.test.mjs",
     "test:schema": "node docs/schema.test.mjs docs/schema.sql",
-    "types": "supabase gen types typescript --local --schema public > lib/database.types.ts"
+    "types": "supabase gen types typescript --local --schema public > lib/database.types.ts",
+    "test:tenant": "node --test docs/tenant.test.mjs",
+    "test:cashier": "node --test docs/cashier.test.mjs",
+    "test:payment": "node --test docs/payment.test.mjs",
+    "test:unit": "node --test docs/buyer.test.mjs docs/checkout.test.mjs docs/menu.test.mjs docs/dashboard.test.mjs docs/report.test.mjs docs/tenant.test.mjs docs/cashier.test.mjs docs/payment.test.mjs",
+    "test": "npm run test:unit && npm run test:schema",
+    "smoke:local": "node --env-file=.env.local scripts/smoke-local.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

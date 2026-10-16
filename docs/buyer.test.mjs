@@ -56,6 +56,31 @@ test('keranjang menolak data rusak dan ID menu tidak sah dari storage', () => {
   assert.equal(Object.keys(h.useCart('cart').cart).length, 0)
 })
 
+test('lunas mengosongkan keranjang yang cocok sekali saja dan mempertahankan keranjang baru', () => {
+  const h = cartHarness()
+  const key = 'paid-cart'
+  h.useCart(key).add(1)
+  h.settlePaidCart(key, { 1: { quantity: 1, note: '' } }, 'order-1')
+  assert.equal(Object.keys(h.useCart(key).cart).length, 0)
+  h.useCart(key).add(1)
+  h.settlePaidCart(key, { 1: { quantity: 1, note: '' } }, 'order-1')
+  assert.equal(h.useCart(key).cart[1].quantity, 1)
+  h.useCart(key).add(2)
+  h.settlePaidCart(key, { 1: { quantity: 1, note: '' } }, 'order-2')
+  assert.equal(h.useCart(key).cart[2].quantity, 1)
+})
+
+test('pesan ulang memulihkan snapshot tanpa menggandakan keranjang atau menimpa catatan baru', () => {
+  const h = cartHarness({ blocked: true })
+  h.useCart('restore').add(1)
+  h.useCart('restore').setNote(1, 'baru')
+  h.restoreCart('restore', { 1: { quantity: 2, note: 'lama' }, 2: { quantity: 3, note: '' } })
+  h.restoreCart('restore', { 1: { quantity: 2, note: 'lama' }, 2: { quantity: 3, note: '' } })
+  assert.equal(h.useCart('restore').cart[1].note, 'baru')
+  assert.equal(h.useCart('restore').cart[1].quantity, 1)
+  assert.equal(h.useCart('restore').cart[2].quantity, 3)
+})
+
 test('menu publik memakai publishable key tanpa membaca cookie sesi staf', async () => {
   const calls = []
   const db = { from(table) {

@@ -45,6 +45,12 @@ function harness({ tenants = [tenant(1), tenant(2, { is_active: false })], reven
       return { canteen_id: 1 }
     } }
     if (name === '@/lib/supabase/server') return { createClient: async () => db }
+    if (name === '@/lib/supabase/read-all') {
+      const helper = { exports: {} }
+      const code = ts.transpileModule(readFileSync('lib/supabase/read-all.ts', 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
+      runInNewContext(code, { module: helper, exports: helper.exports })
+      return helper.exports
+    }
     return require(name)
   } })
   return { ...loaded.exports, calls }
@@ -111,6 +117,6 @@ test('akses ditolak sebelum query; kegagalan database tidak berubah menjadi angk
   await assert.rejects(denied.getAdminDashboard(today), /redirect/)
   assert.equal(denied.calls.length, 0)
   for (const fail of ['canteens', 'tenants', 'tenant_daily_revenue', 'orders']) {
-    await assert.rejects(harness({ fail }).getAdminDashboard(today), /Dashboard belum bisa dimuat/)
+    await assert.rejects(harness({ fail }).getAdminDashboard(today), /(?:Dashboard|Data) belum bisa dimuat/)
   }
 })

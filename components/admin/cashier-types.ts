@@ -1,7 +1,7 @@
-import type { MenuItem, ServiceType, Tenant } from '@/lib/types'
+import type { MenuItem, ServiceType, TenantSummary } from '@/lib/types'
 
 export type CartGroup = {
-  tenant: Tenant
+  tenant: TenantSummary
   lines: { item: MenuItem; qty: number }[]
   subtotal: number
 }
@@ -13,7 +13,7 @@ export type CashSale = {
   customerName: string
   service: ServiceType
   total: number
-  received: number
+  received: number | null
   parts: { number: string; tenantName: string; items: string; subtotal: number }[]
 }
 

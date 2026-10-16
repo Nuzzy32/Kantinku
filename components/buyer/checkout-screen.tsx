@@ -41,7 +41,7 @@ export function CheckoutScreen() {
   const [submitError, setSubmitError] = useState('')
 
   // Next menyimpan state halaman yang ditinggalkan (Activity). Tanpa ini, kembali ke sini sesudah bayar menyisakan tombol "Membuat QRIS…" yang mati.
-  useLayoutEffect(() => () => { setPaying(false) }, [])
+  useLayoutEffect(() => () => { setPaying(false); submitting.current = false }, [])
 
   const errName = touched.name ? nameError(name) : undefined
   const errWa = touched.wa ? waError(wa) : undefined
@@ -70,13 +70,14 @@ export function CheckoutScreen() {
       if (!response.ok) {
         setSubmitError(result.error ?? 'QRIS gagal dibuat. Coba lagi.')
         setPaying(false)
+        submitting.current = false
+        if (response.status === 409) router.refresh()
         return
       }
       router.push(`/order/${result.publicToken}`)
     } catch {
       setSubmitError('Koneksi bermasalah. Keranjangmu tetap tersimpan. Coba lagi.')
       setPaying(false)
-    } finally {
       submitting.current = false
     }
   }
@@ -217,7 +218,7 @@ export function CheckoutScreen() {
           </div>
           {submitError && <p role="alert" className="mb-3 font-medium text-destructive">{submitError}</p>}
           <Button type="submit" size="lg" className="w-full rounded-xl font-bold" disabled={paying || blocked}>
-            {paying ? (<><Loader2 aria-hidden className="animate-spin" />Membuat QRIS…</>) : `Bayar QRIS · ${rupiah(total)}`}
+            {paying ? (<><Loader2 aria-hidden className="animate-spin" />Membuat QRIS…</>) : submitError ? `Coba lagi · ${rupiah(total)}` : `Bayar QRIS · ${rupiah(total)}`}
           </Button>
           <p role="status" className="sr-only">{paying ? 'Membuat kode QRIS, mohon tunggu.' : ''}</p>
         </footer>

@@ -1,7 +1,7 @@
 'use client'
-import { Suspense, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { ClipboardList, LogOut, ReceiptText, UtensilsCrossed, WifiOff } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { buttonVariants } from '@/components/ui/button'
@@ -17,9 +17,9 @@ const tabs = [
   { href: '/tenant/rekap', label: 'Rekap', icon: ReceiptText },
 ]
 
-// Hanya untuk melihat tampilannya: /tenant?offline=1. Pengambilan ulang data sungguhan dikerjakan di story Supabase.
 function OfflineBanner() {
-  if (useSearchParams().get('offline') !== '1') return null
+  const { offline } = useTenant()
+  if (!offline) return null
   return (
     <div role="alert" className="flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-base font-semibold text-primary-foreground">
       <WifiOff className="size-5 shrink-0" aria-hidden />
@@ -82,9 +82,7 @@ export function TenantShell({ children }: { children: React.ReactNode }) {
         Lewati ke konten
       </a>
       <div className="sticky top-0 z-30">
-        <Suspense fallback={null}>
-          <OfflineBanner />
-        </Suspense>
+        <OfflineBanner />
         <header className="border-b bg-card">
           <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4">
             <div className="flex min-w-0 items-center gap-2">

@@ -12,8 +12,10 @@ const groups = [
       { href: '/info', label: 'Info kantin', note: 'Jam operasional' },
       { href: '/profil', label: 'Profil tamu' },
       { href: '/checkout', label: 'Keranjang dan data pembeli' },
-      { href: '/order/demo', label: 'Bayar QRIS dan status pesanan' },
-      { href: '/order/demo?demo=tolak', label: 'Status dengan pesanan ditolak', note: 'contoh keadaan' },
+      ...(process.env.NODE_ENV === 'production' ? [] : [
+        { href: '/order/demo', label: 'Bayar QRIS dan status pesanan', note: 'simulasi development' },
+        { href: '/order/demo?demo=tolak', label: 'Status dengan pesanan ditolak', note: 'simulasi development' },
+      ]),
     ],
   },
   {
@@ -42,7 +44,7 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <h1 className="text-3xl font-extrabold tracking-tight">KantinKu</h1>
-      <p className="mt-2 text-ink-2">Halaman awal pengembangan. Semua layar masih memakai data contoh.</p>
+      <p className="mt-2 text-ink-2">Menu pembeli dan operasional staf memakai data kantin. Pembayaran QRIS memerlukan konfigurasi Xendit pengelola.</p>
       <div className="mt-8 flex flex-col gap-8">
         {groups.map((g, i) => (
           <section key={g.title} aria-labelledby={`grup-${i}`}>

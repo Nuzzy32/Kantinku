@@ -19,7 +19,7 @@ Scan QR, pilih menu, dan ikuti progres pesanan dari ponsel.
 
 KantinKu menyatukan pemesanan dari beberapa penjual dalam satu kantin. Pembeli tidak perlu membuat akun untuk melihat menu atau menyiapkan pesanan. Setiap tenant memiliki area kerja sendiri, sedangkan pengelola menangani operasional kantin.
 
-Alur yang dituju adalah satu pembayaran QRIS untuk menu dari beberapa tenant, lalu pesanan diteruskan ke penjual masing-masing. **Integrasi pembayaran dan antrean realtime masih dalam pengembangan.**
+Satu pembayaran QRIS memuat menu dari beberapa tenant, lalu pesanan diteruskan ke penjual masing-masing. **Jalur QRIS sudah diimplementasikan, tetapi kunci dan simulasi Xendit asli masih diperlukan sebelum pilot.** Status terperinci dan kebutuhan operator ada di [catatan handoff](docs/HANDOFF.md).
 
 ## Satu aplikasi, tiga area
 
@@ -46,11 +46,11 @@ flowchart LR
     style F fill:#E8F5EC,stroke:#238636,color:#14532D
 ```
 
-*Skenario produk yang dituju. Beberapa tahap masih berupa tampilan demo.*
+*Alur implementasi MVP. Pembayaran gateway dan perilaku perangkat fisik masih memerlukan uji pilot.*
 
 ## Status pengembangan
 
-Status berikut menggambarkan kode di branch pengembangan `feat/ui-foundation` (belum digabung ke `main`).
+Status berikut menggambarkan kode di checkout ini; lihat [handoff](docs/HANDOFF.md) untuk batas verifikasi dan deployment.
 
 | Bagian | Status |
 | :--- | :--- |
@@ -58,10 +58,11 @@ Status berikut menggambarkan kode di branch pengembangan `feat/ui-foundation` (b
 | Menu pembeli dari QR meja dengan data Supabase | ✅ Tersedia |
 | Keranjang lintas tenant, catatan, dan penyimpanan lokal | ✅ Tersedia |
 | Login staf dan pembatasan akses per peran | ✅ Tersedia |
-| Pengelolaan menu tenant dan status buka/tutup | 🚧 Integrasi bertahap |
-| Checkout QRIS dan konfirmasi pembayaran | 🚧 Dalam pengembangan |
-| Antrean realtime dan status pesanan | 🎨 Tampilan demo |
-| Kasir, laporan, bagi hasil, dan refund | 🎨 Tampilan demo |
+| Pengelolaan menu tenant dan status buka/tutup | ✅ Supabase |
+| Checkout QRIS, webhook, pengecekan gateway | 🚧 Kode dan tes kontrak tersedia; belum simulasi Xendit asli |
+| Antrean tenant, perubahan status, dan rekap WIB | ✅ Supabase; uji perangkat fisik masih diperlukan |
+| Kasir tunai, laporan, bagi hasil, refund manual | ✅ Supabase; retry tunai idempoten |
+| Job kedaluwarsa setiap menit | ✅ Aktif dan terverifikasi lokal; setup ulang di cloud |
 
 Rincian pekerjaan dan acceptance criteria ada di [rencana build MVP](docs/TASKS.md).
 
@@ -121,7 +122,7 @@ npm run dev
 | Login pengelola & kasir | [localhost:3000/admin/login](http://localhost:3000/admin/login) |
 | Supabase Studio | [127.0.0.1:54323](http://127.0.0.1:54323) |
 
-Seed menyiapkan **1 kantin, 3 tenant, 10 menu, 5 meja**, serta akun staf dengan domain `@kantinku.test`. Lihat [script seed](scripts/seed.mjs) untuk alamat akunnya. Beberapa layar masih memakai data contoh dari `lib/mock.ts`; menu pembeli dan login membutuhkan Supabase.
+Seed menyiapkan **1 kantin, 3 tenant, 10 menu, 5 meja**, serta akun staf dengan domain `@kantinku.test`. Lihat [script seed](scripts/seed.mjs) untuk alamat akunnya. Menu, transaksi, antrean, dan operasional memakai Supabase. Simulasi `/order/demo` hanya tersedia saat development.
 
 ## Perintah pengembangan
 

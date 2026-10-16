@@ -1,36 +1,20 @@
-'use client'
-import { useState } from 'react'
-import { periodGross, tenants } from '@/lib/mock'
-import { canteenShare, rupiah } from '@/lib/rupiah'
+import { rupiah } from '@/lib/rupiah'
+import type { AdminReport } from '@/lib/admin-report'
+import { Button } from '@/components/ui/button'
+import { Pill } from '@/components/pill'
 import { RowTh, TableWrap, Td, Th } from './data-table'
 import { Field } from './field'
 import { RefundList } from './refund-list'
 
-const TODAY = '2026-10-15' // "hari ini" tetap di data contoh
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 const fmtDate = (iso: string) => {
   const [y, m, d] = iso.split('-').map(Number)
   return `${d} ${MONTHS[m - 1]} ${y}`
 }
 
-// Bagi hasil sama dengan view tenant_daily_revenue: bagian pengelola = round(omzet x %), sisanya bagian tenant.
-const rows = [...tenants]
-  .sort((a, b) => a.id - b.id)
-  .map((t) => {
-    const gross = periodGross[t.id] ?? 0
-    const canteen = canteenShare(gross, t.sharePercent)
-    return { tenant: t, gross, canteen, tenantShare: gross - canteen }
-  })
-const sum = (pick: (r: (typeof rows)[number]) => number) => rows.reduce((a, r) => a + pick(r), 0)
-
-export function ReportView() {
-  const [from, setFrom] = useState('2026-10-01')
-  const [to, setTo] = useState(TODAY)
-
-  const fromError = from ? '' : 'Isi tanggal Dari.'
-  const toError = !to ? 'Isi tanggal Sampai.' : from && from > to ? 'Tanggal Sampai tidak boleh sebelum Dari.' : ''
-  const error = fromError || toError
-
+export function ReportView({ report: { period, rows, refunds } }: { report: AdminReport }) {
+  const { from, to, today, error } = period
+  const sum = (pick: (r: (typeof rows)[number]) => number) => rows.reduce((a, r) => a + pick(r), 0)
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -40,10 +24,12 @@ export function ReportView() {
 
       <section aria-labelledby="bagi-hasil" className="flex flex-col gap-3">
         <h2 id="bagi-hasil" className="text-lg font-bold">Bagi hasil</h2>
-        <div className="flex flex-wrap items-start gap-4">
-          <Field label="Dari" type="date" value={from} max={to || TODAY} onChange={(e) => setFrom(e.target.value)} error={fromError} className="w-48" />
-          <Field label="Sampai" type="date" value={to} min={from} max={TODAY} onChange={(e) => setTo(e.target.value)} error={toError} className="w-48" />
-        </div>
+        <form action="/admin/laporan" method="get" className="flex flex-wrap items-end gap-4">
+          <Field label="Dari" name="from" type="date" defaultValue={from} max={today} required className="w-48" />
+          <Field label="Sampai" name="to" type="date" defaultValue={to} max={today} required className="w-48" />
+          <Button type="submit">Tampilkan laporan</Button>
+        </form>
+        {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
 
         {!error && (
           <>
@@ -62,13 +48,14 @@ export function ReportView() {
                 {rows.map(({ tenant, gross, canteen, tenantShare }) => (
                   <tr key={tenant.id} className="border-b">
                     <RowTh>{tenant.code}</RowTh>
-                    <Td className="font-medium">{tenant.name}</Td>
-                    <Td right>{tenant.sharePercent.toLocaleString('id-ID')}%</Td>
+                    <Td className="font-medium">{tenant.name} {!tenant.is_active && <Pill tone="neutral">Nonaktif</Pill>}</Td>
+                    <Td right>{Number(tenant.revenue_share_percent).toLocaleString('id-ID')}%</Td>
                     <Td right>{rupiah(gross)}</Td>
                     <Td right>{rupiah(canteen)}</Td>
                     <Td right>{rupiah(tenantShare)}</Td>
                   </tr>
                 ))}
+                {!rows.length && <tr><Td colSpan={6} className="py-8 text-center text-muted-foreground">Belum ada tenant di kantin ini.</Td></tr>}
               </tbody>
               <tfoot>
                 <tr className="bg-muted/50 font-bold">
@@ -80,13 +67,13 @@ export function ReportView() {
               </tfoot>
             </TableWrap>
             <p className="text-xs text-muted-foreground">
-              Pesanan yang ditolak tidak dihitung. Data contoh: angka belum berubah mengikuti tanggal.
+              Berdasarkan tanggal pembayaran WIB. Pesanan yang ditolak tidak dihitung. Bagian pengelola dan tenant dijumlahkan dari rekap harian.
             </p>
           </>
         )}
       </section>
 
-      <RefundList />
+      <RefundList refunds={refunds} />
     </div>
   )
 }

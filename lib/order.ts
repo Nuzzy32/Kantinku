@@ -13,6 +13,7 @@ export type PublicOrder = {
   menuHref: string | null
   snapshot: Snapshot
   statuses: Record<number, OrderStatus>
+  cart: { canteenSlug: string; tableToken: string; items: { menu_item_id: number; quantity: number; note: string }[] } | null
 }
 
 // Token UUID memberi akses ke pesanan ini; jangan kirim telepon atau ID internal checkout.
@@ -20,10 +21,10 @@ export async function getPublicOrder(token: string): Promise<PublicOrder | null>
   if (!z.uuid().safeParse(token).success) return null
   const { data, error } = await supabaseAdmin.from('checkouts').select(`
     public_token, payment_status, expires_at, qr_string, total,
-    table:dining_tables(qr_token),
+    table:dining_tables(qr_token), canteen:canteens(slug),
     orders(id, status, subtotal, cancel_reason,
       tenant:tenants(id, code, name, is_open),
-      order_items(id, quantity, name, note))
+      order_items(id, menu_item_id, quantity, name, note))
   `).eq('public_token', token).maybeSingle()
   if (error) throw error
   if (!data) return null
@@ -36,6 +37,10 @@ export async function getPublicOrder(token: string): Promise<PublicOrder | null>
     qrImage: paymentStatus === 'pending' && data.qr_string
       ? await QRCode.toDataURL(data.qr_string, { width: 576, margin: 4, errorCorrectionLevel: 'M' }) : null,
     menuHref: data.table ? `/t/${data.table.qr_token}` : null,
+    cart: data.table && data.canteen ? {
+      canteenSlug: data.canteen.slug, tableToken: data.table.qr_token,
+      items: data.orders.flatMap((o) => o.order_items.map((i) => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, note: i.note ?? '' }))),
+    } : null,
     snapshot: {
       total: data.total,
       groups: data.orders.map((order) => ({

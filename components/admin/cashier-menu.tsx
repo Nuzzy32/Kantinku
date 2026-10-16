@@ -5,15 +5,15 @@ import { Pill } from '@/components/pill'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { menuItems, tenants } from '@/lib/mock'
+import type { MenuItem, TenantSummary } from '@/lib/types'
 import { rupiah } from '@/lib/rupiah'
 import { cn } from '@/lib/utils'
 import { MAX_QTY } from './cashier-types'
 
 // Tenant nonaktif tidak bisa dipesan (create_checkout menolaknya), tenant tutup tetap tampil terlipat.
-const sellers = tenants.filter((t) => t.isActive)
 
-export function CashierMenu({ cart, onAdd }: { cart: Record<number, number>; onAdd: (id: number) => void }) {
+export function CashierMenu({ tenants, menuItems, cart, onAdd }: { tenants: TenantSummary[]; menuItems: MenuItem[]; cart: Record<number, number>; onAdd: (id: number) => void }) {
+  const sellers = tenants // server hanya mengirim tenant aktif
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<number | null>(null)
   const [opened, setOpened] = useState<number[]>([]) // tenant tutup yang sedang dibuka
