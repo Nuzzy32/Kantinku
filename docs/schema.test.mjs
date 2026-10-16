@@ -105,6 +105,16 @@ assert.equal((await db.query(`select is_open from tenants where id = 2`)).rows[0
 await asUser(ADMIN, () => db.query(`update tenants set name = 'Mie Ayam Yamin 2' where id = 1`))
 assert.equal((await db.query(`select name from tenants where id = 1`)).rows[0].name, 'Mie Ayam Yamin 2')
 
+// 7a. Admin hanya mengelola kantinnya sendiri (Story 14), dan tidak bisa menulis profiles langsung
+await db.exec(`insert into canteens (name, slug) values ('Kantin Lain', 'lain');
+               insert into tenants (canteen_id, code, name) values (2, 'X1', 'Tenant Kantin Lain');`)
+assert.equal((await asUser(ADMIN, () => db.query(`update tenants set name = 'Dibajak' where code = 'X1' returning id`))).rows.length, 0)
+await rejects(asUser(ADMIN, () => db.query(`insert into tenants (canteen_id, code, name) values (2, 'X2', 'Sisipan')`)), /row-level security/)
+await asUser(ADMIN, () => db.query(`insert into tenants (canteen_id, code, name) values (1, 'T11', 'Tenant Baru')`))
+await rejects(asUser(ADMIN, () => db.query(`insert into tenants (canteen_id, code, name) values (1, 'T11', 'Kode Ganda')`)), /duplicate key/)
+await rejects(asUser(ADMIN, () => db.query(`insert into profiles values ('${T1}', 'admin', 1, null, 'Naik pangkat')`)), /permission denied/)
+await db.exec(`delete from tenants where code in ('X1', 'T11'); delete from canteens where slug = 'lain';`)
+
 // 7b. Tenant tidak bisa menaruh menunya di kategori tenant lain
 await db.exec(`insert into menu_categories (tenant_id, name) values (2, 'Jus')`)
 await rejects(asUser(T1, () => db.query(`update menu_items set category_id = 1 where id = 1`)), /foreign key/)

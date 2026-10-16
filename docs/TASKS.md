@@ -178,9 +178,9 @@ Prioritas: P0 · Effort: M · Dependensi: 8
 ### Story 14: Kelola tenant & akun
 **Sebagai pengelola, saya ingin menambah tenant dan membuat akun login mereka, agar tenant baru bisa langsung berjualan.**
 
-- [ ] `/admin/login` dan `/admin/tenant`: tambah/edit tenant (kode, nama, % bagi hasil), nonaktifkan tenant.
-- [ ] Membuat akun tenant/kasir (server action + secret key → `auth.admin.createUser` + baris `profiles`).
-- [ ] Hanya peran `admin` yang bisa mengakses halaman ini.
+- [x] `/admin/login` dan `/admin/tenant`: tambah/edit tenant (kode, nama, % bagi hasil), nonaktifkan tenant.
+- [x] Membuat akun tenant/kasir (server action + secret key → `auth.admin.createUser` + baris `profiles`).
+- [x] Hanya peran `admin` yang bisa mengakses halaman ini.
 
 Prioritas: P0 · Effort: M · Dependensi: 0
 

@@ -1,4 +1,7 @@
+import { LogOut, Store } from 'lucide-react'
+import { signOut } from '@/app/actions/auth'
 import { TenantProvider } from '@/components/tenant/tenant-provider'
+import { Button } from '@/components/ui/button'
 import { TenantShell } from '@/components/tenant/tenant-shell'
 import { requireRole } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
@@ -12,12 +15,27 @@ export default async function TenantAppLayout({ children }: { children: React.Re
     .from('tenants')
     .select('id, code, name, is_open, revenue_share_percent')
     .eq('id', profile.tenant_id!) // check di profiles: peran tenant selalu punya tenant_id
-    .single()
+    .maybeSingle()
   if (error) throw error
+  // RLS hanya menampilkan tenant aktif: tidak ada baris = tenant dinonaktifkan pengelola.
+  if (!t) return <InactiveNotice />
   const tenant = { id: t.id, code: t.code, name: t.name, isOpen: t.is_open, sharePercent: Number(t.revenue_share_percent) }
   return (
     <TenantProvider tenant={tenant}>
       <TenantShell>{children}</TenantShell>
     </TenantProvider>
+  )
+}
+
+function InactiveNotice() {
+  return (
+    <main className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+      <Store aria-hidden className="size-12 text-muted-foreground" />
+      <h1 className="text-2xl font-bold">Toko sedang dinonaktifkan</h1>
+      <p className="text-ink-2">Pengelola kantin menonaktifkan tokomu, jadi pesanan baru tidak masuk. Hubungi pengelola untuk mengaktifkannya lagi.</p>
+      <form action={signOut.bind(null, '/tenant/login')}>
+        <Button type="submit" variant="outline" size="lg"><LogOut aria-hidden /> Keluar</Button>
+      </form>
+    </main>
   )
 }

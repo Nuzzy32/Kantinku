@@ -119,7 +119,7 @@ Bilah atas: KantinKu · "Pengelola · Kantin Teknik", navigasi Dashboard · Tena
 Tiga kartu: Omzet hari ini, Pesanan aktif (hitung nyata dari data contoh, tanpa angka karangan), **Perlu refund** (merah bila > 0, bisa diklik ke Laporan). Tabel per tenant: kode, nama, status Buka/Tutup (`Pill`), pesanan, omzet + batang proporsional omzet (div dengan lebar %, teks angka tetap ada).
 
 ### C2. Tenant `/admin/tenant`
-Tabel: kode, nama, jenis, bagi hasil %, akun login (email), tombol Nonaktifkan/Aktifkan. Dialog **Tambah tenant** (kode, nama, bagi hasil %, email; wajib semua, error ramah, toast "Tenant & akun dibuat. Kirim kata sandi sementara ke tenant."). Tenant nonaktif redup.
+Tabel: kode, nama, bagi hasil %, akun login (email), tombol Edit dan Nonaktifkan/Aktifkan. Dialog **Tambah tenant** (kode, nama, bagi hasil %, email; wajib semua, error ramah). Setelah dibuat, dialog menampilkan **kata sandi sementara sekali saja** + tombol salin. Edit tidak mengubah email. Tenant nonaktif redup, hilang dari menu pembeli, dan dashboard tenantnya menampilkan "Toko sedang dinonaktifkan". Bagian **Akun kasir**: daftar kasir + dialog tambah (nama, email).
 
 ### C3. Meja & QR `/admin/meja`
 Kiri: tambah meja (label unik, error "Label meja sudah dipakai."), daftar meja dengan kotak centang dan tautan `/t/<token>`. Kanan: **pratinjau A4** (maks 4 kartu per halaman): "Pesan di Sini!", label meja, kotak QR placeholder, 3 langkah (Scan → Bayar QRIS → Ambil). Tombol "Cetak QR" memanggil `window.print()`; CSS cetak hanya menampilkan pratinjau. QR sungguhan (butuh paket `qrcode`) dikerjakan di Story 15, bukan sekarang.
